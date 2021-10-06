@@ -1,6 +1,6 @@
-# Firenze
-
 [![Node.js CI](https://github.com/franleplant/firenze/actions/workflows/ci.yml/badge.svg)](https://github.com/franleplant/firenze/actions/workflows/ci.yml)
+
+# Firenze
 
 > Where the web3 renaissance happens.
 
