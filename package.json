@@ -7,7 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prettier": "prettier \"./src/**/*.{js,jsx,ts,tsx,css,md}\"",
+    "format": "yarn prettier --write",
+    "format-check": "yarn prettier --check",
+    "ci": "yarn lint && yarn format-check && yarn typecheck",
+    "prepare": "husky install"
   },
   "dependencies": {
     "next": "11.1.2",
@@ -19,8 +24,16 @@
     "autoprefixer": "^10.3.6",
     "eslint": "7.32.0",
     "eslint-config-next": "11.1.2",
+    "eslint-config-prettier": "^8.3.0",
+    "husky": ">=6",
+    "lint-staged": ">=10",
     "postcss": "^8.3.8",
+    "prettier": "^2.4.1",
     "tailwindcss": "^2.2.16",
     "typescript": "4.4.3"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": "eslint --cache --fix",
+    "*.{js,jsx,ts,tsx,css,md}": "prettier --write"
   }
 }
