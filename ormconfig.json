@@ -1,0 +1,24 @@
+{
+   "type": "postgres",
+   "host": "localhost",
+   "port": 1000,
+   "username": "postgres",
+   "password": "postgres",
+   "database": "typeorm-poc-db",
+   "synchronize": true,
+   "logging": false,
+   "entities": [
+      "src/entity/**/*.ts"
+   ],
+   "migrations": [
+      "src/migration/**/*.ts"
+   ],
+   "subscribers": [
+      "src/subscriber/**/*.ts"
+   ],
+   "cli": {
+      "entitiesDir": "src/orm/entity",
+      "migrationsDir": "src/orm/migration",
+      "subscribersDir": "src/orm/subscriber"
+   }
+}
