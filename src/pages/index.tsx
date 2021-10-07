@@ -7,6 +7,7 @@ import styles from "../styles/Home.module.css";
 
 const Home: NextPage = () => {
   // TODO handle error
+  // TODO chain human friendly names
   const { account, active, chainId } = useWeb3React();
   const login = useConnect();
   return (

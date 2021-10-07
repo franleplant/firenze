@@ -4,8 +4,6 @@ import { Web3ReactProvider } from "@web3-react/core";
 import getLibrary from "../modules/wallet/getLibrary";
 
 function MyApp({ Component, pageProps }: AppProps) {
-  //useEff
-
   //if (!!window.ethereum) {
   //window.ethereum.autoRefreshOnNetworkChange = false;
   //}

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useWeb3React } from "@web3-react/core";
 import { injected } from "./connectors";
 
+// TODO this should be called useEagerConnect to metamask
 export function useEagerConnect(): boolean {
   const { activate, active } = useWeb3React();
   const [tried, setTried] = useState(false);
