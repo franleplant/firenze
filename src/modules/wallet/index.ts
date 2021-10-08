@@ -6,4 +6,9 @@
 // here is the way uniswap supports all connectors
 // https://github.com/Uniswap/interface/blob/2482a10ca87bfe61a2ba2023f847cdf2f909f273/src/components/WalletModal/index.tsx
 //
-export const fake = {};
+//
+
+import Chain from "./Chain";
+import { useConnect } from "./hooks";
+
+export { Chain, useConnect };

@@ -2,13 +2,12 @@ import type { NextPage } from "next";
 import Head from "next/head";
 import Image from "next/image";
 import { useWeb3React } from "@web3-react/core";
-import { useConnect } from "../modules/wallet/hooks";
+import { Chain, useConnect } from "../modules/wallet";
 import styles from "../styles/Home.module.css";
 
 const Home: NextPage = () => {
   // TODO handle error
-  // TODO chain human friendly names
-  const { account, active, chainId } = useWeb3React();
+  const { account, active } = useWeb3React();
   const login = useConnect();
   return (
     <div className="">
@@ -19,17 +18,18 @@ const Home: NextPage = () => {
       </Head>
 
       <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
-
+        {/* TODO this should be part of a "nav" or "header" */}
         {active && account ? (
           <p>
-            Hello {account} on {chainId === 1 ? "Ethereum mainnet" : chainId}
+            Hello {account} on <Chain />
           </p>
         ) : (
           <button onClick={login}>Login with metamask</button>
         )}
+
+        <h1 className={styles.title}>
+          Welcome to <a href="https://nextjs.org">Next.js!</a>
+        </h1>
       </main>
 
       <footer className={styles.footer}>
