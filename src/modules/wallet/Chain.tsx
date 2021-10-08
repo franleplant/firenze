@@ -18,7 +18,7 @@ export default function Chain() {
     <span>
       <img
         src={chain.logoUrl}
-        style={{ maxWidth: "20px;", display: "inline" }}
+        style={{ maxWidth: "20px", display: "inline" }}
       />{" "}
       {chain.label}
     </span>

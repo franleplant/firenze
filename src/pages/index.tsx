@@ -2,13 +2,15 @@ import type { NextPage } from "next";
 import Head from "next/head";
 import Image from "next/image";
 import { useWeb3React } from "@web3-react/core";
-import { Chain, useConnect } from "../modules/wallet";
+import { Account, Chain, useConnect, useEagerConnect } from "../modules/wallet";
 import styles from "../styles/Home.module.css";
 
 const Home: NextPage = () => {
+  useEagerConnect();
   // TODO handle error
   const { account, active } = useWeb3React();
   const login = useConnect();
+
   return (
     <div className="">
       <Head>
@@ -21,7 +23,7 @@ const Home: NextPage = () => {
         {/* TODO this should be part of a "nav" or "header" */}
         {active && account ? (
           <p>
-            Hello {account} on <Chain />
+            Hello <Account /> on <Chain />
           </p>
         ) : (
           <button onClick={login}>Login with metamask</button>

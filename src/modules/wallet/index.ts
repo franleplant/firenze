@@ -9,6 +9,7 @@
 //
 
 import Chain from "./Chain";
-import { useConnect } from "./hooks";
+import Account from "./Account";
+import { useConnect, useEagerConnect } from "./hooks";
 
-export { Chain, useConnect };
+export { Account, Chain, useConnect, useEagerConnect };
