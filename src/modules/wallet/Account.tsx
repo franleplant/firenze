@@ -14,6 +14,7 @@ export default function Account() {
     return null;
   }
 
+  // TODO improve the flicker of raw pubkey when trying to load the domain
   let label = account;
   if (domain) {
     // TODO alwasy show address somehow
