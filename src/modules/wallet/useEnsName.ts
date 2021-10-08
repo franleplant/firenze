@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import useLibrary from "./useLibrary";
 
-export function useEnsName(account: string | undefined): string | undefined {
+export function useEnsName(
+  account: string | undefined | null
+): string | undefined {
   const library = useLibrary();
   const [domain, setDomain] = useState<string | undefined>();
 

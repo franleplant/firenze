@@ -32,3 +32,7 @@
 
 //return children
 //}
+//
+// fake
+//
+export const fake = {};
