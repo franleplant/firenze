@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import useLibrary from "./useLibrary";
 
-export function useEnsName(
+export default function useEnsName(
   account: string | undefined | null
 ): string | undefined {
   const library = useLibrary();

@@ -8,8 +8,10 @@
 //
 //
 
-import Chain from "./Chain";
-import Account from "./Account";
-import { useConnect, useEagerConnect } from "./hooks";
+import { useWeb3React } from "@web3-react/core";
+import { CHAIN_INFO } from "./chains";
 
-export { Account, Chain, useConnect, useEagerConnect };
+import { useConnect, useEagerConnect } from "./hooks";
+import useEnsName from "./useEnsName";
+
+export { useConnect, useEagerConnect, useEnsName, useWeb3React, CHAIN_INFO };

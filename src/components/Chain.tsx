@@ -1,6 +1,5 @@
 import React from "react";
-import { useWeb3React } from "@web3-react/core";
-import { CHAIN_INFO } from "./chains";
+import { CHAIN_INFO, useWeb3React } from "modules/wallet";
 
 export default function Chain() {
   const { active, chainId } = useWeb3React();
