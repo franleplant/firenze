@@ -1,0 +1,46 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model AuthorProfile {
+  author    String   @db.VarChar(255) @id
+  profile   String   @db.VarChar(255)
+  timestamp DateTime @default(now())
+  isDeleted Boolean  @default(false)
+}
+
+model AuthorPost {
+  author    String @db.VarChar(255)
+  post      String @db.VarChar(255) @id
+  timestamp DateTime @default(now())
+  isDeleted Boolean  @default(false)
+}
+
+model AuthorPostHead {
+  author String @db.VarChar(255) @id
+  post String @db.VarChar(255)
+}
+
+model Follow {
+  id        Int @id @default(autoincrement())
+  fromUser  String @db.VarChar(255)
+  toUser    String @db.VarChar(255)
+  timestamp DateTime @default(now())
+}
+
+model PostLike {
+  id    Int @id @default(autoincrement())
+  post  String @db.VarChar(255)
+  liker String @db.VarChar(255)
+  timestamp DateTime @default(now())
+}
+
+model PostResponse {
+  fromPost String @db.VarChar(255) @id
+  toPost String @db.VarChar(255)
+}

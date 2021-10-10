@@ -15,7 +15,7 @@ Default configuration can be read in the .env file included.
 
 ## Database files
 
-Files are stored and read from the location defined by the environment variable 'POSTGRES_HOST_PATH' which defaults to '/firenze-db'.
+Files are stored and read from the location defined by the environment variable 'POSTGRES_HOST_PATH' which defaults to '/firenzedb'.
 This files can be deleted before restarting the project for a clean database regeneration.
 
 ## Database port
