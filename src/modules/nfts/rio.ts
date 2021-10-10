@@ -5,6 +5,7 @@ import { useChain } from "modules/wallet";
 import type { IResult } from "server/io/moralis";
 import { getNFTs } from "./io";
 
+// TODO if it returns "SYNCING" we should try again
 export function useNfts(
   account: string | undefined | null
 ): UseQueryResult<IResult | undefined> {

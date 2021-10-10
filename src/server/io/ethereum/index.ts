@@ -11,6 +11,8 @@ export function getProvider(chain: string): ethers.providers.BaseProvider {
   return provider;
 }
 
+// TODO this  fn can be abstracted into an isomorphic one,
+// maybe we can move it into a domain module
 export async function isNftOwner({
   ownerAddress,
   tokenAddress,
