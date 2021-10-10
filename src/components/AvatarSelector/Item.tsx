@@ -40,7 +40,7 @@ export default function Item({ nft, active, checked }: IProps) {
             </a>
           </small>
         </RadioGroup.Label>
-        <RadioGroup.Description>
+        <RadioGroup.Description as="div">
           <p>{meta.description || "no description"}</p>
 
           <div>Id: {nft.token_id}</div>
