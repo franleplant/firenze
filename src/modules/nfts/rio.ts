@@ -13,11 +13,17 @@ export function useNfts(
   return useQuery({
     queryKey: "user-nfts",
     enabled: !!(chain && account),
-    queryFn: () => {
+    queryFn: async () => {
       if (!(chain && account)) {
         return;
       }
-      return getNFTs(account!, chain.label.toLowerCase());
+      const nfts = await getNFTs(account!, chain.label.toLowerCase());
+      if (nfts.status !== "SYNCED") {
+        console.log(`nfts still not synced, failing and retrying...`);
+        throw new Error(`nfts still not synced`);
+      }
+
+      return nfts;
     },
   });
 }
