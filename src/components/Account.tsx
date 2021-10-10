@@ -13,11 +13,18 @@ export default function Account() {
   }
 
   // TODO improve the flicker of raw pubkey when trying to load the domain
-  let label = account;
+  let label = redact(account);
   if (domain) {
     // TODO alwasy show address somehow
     label = domain;
   }
 
   return <strong title={account}>{label}</strong>;
+}
+
+function redact(account: string) {
+  const start = account.slice(0, 7);
+  const end = account.slice(-4);
+
+  return `${start}...${end}`;
 }

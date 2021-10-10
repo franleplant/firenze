@@ -2,6 +2,7 @@ import { useWeb3React } from "@web3-react/core";
 import { CHAIN_INFO } from "./chains";
 import type { ChainInfo } from "./chains";
 
+// TODO make this also return chainId
 export default function useChain<K extends keyof ChainInfo>():
   | ChainInfo[K]
   | undefined {

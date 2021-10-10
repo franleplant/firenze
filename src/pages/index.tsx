@@ -6,12 +6,25 @@ import Account from "components/Account";
 import Chain from "components/Chain";
 
 import styles from "../styles/Home.module.css";
+import { useNfts } from "modules/nfts";
+import Avatar from "components/Avatar";
 
 const Home: NextPage = () => {
   useEagerConnect();
   // TODO handle error
   const { account, active } = useWeb3React();
   const login = useConnect();
+  const { data: nfts } = useNfts(account);
+
+  // TODO abstract
+  const avatarUrl = (() => {
+    // Grab the first, but evenutally grab the chosen one
+    const meta = nfts?.result?.find((element) => !!element.metadata);
+    if (!meta) {
+      return;
+    }
+    return JSON.parse(meta.metadata)?.image;
+  })();
 
   return (
     <div className="">
@@ -24,9 +37,10 @@ const Home: NextPage = () => {
       <main className={styles.main}>
         {/* TODO this should be part of a "nav" or "header" */}
         {active && account ? (
-          <p>
+          <div>
             Hello <Account /> on <Chain />
-          </p>
+            <Avatar url={avatarUrl} />
+          </div>
         ) : (
           <button onClick={login}>Login with metamask</button>
         )}
