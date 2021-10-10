@@ -1,10 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-import { getNFTs } from "server/io/moralis";
+import { getNFTs, IResult } from "server/io/moralis";
 
 export default async function (
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse<IResult>
 ): Promise<void> {
   if (req.method === "GET") {
     const { address, chain } = req.query;
