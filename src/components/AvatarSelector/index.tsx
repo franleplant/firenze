@@ -48,25 +48,33 @@ export default function AvatarSelectorModal() {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <div className="inline-block max-w-2lg p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
+              <div className="inline-block max-w-7xl w-full p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
                 <Dialog.Title
                   as="h3"
                   className="text-lg font-medium leading-6 text-gray-900"
                 >
                   Select your avatar
-                  <button
-                    type="button"
-                    className="inline-flex justify-center px-4 py-2 text-sm font-medium text-blue-900 bg-blue-100 border border-transparent rounded-md hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Close
-                  </button>
                 </Dialog.Title>
                 <div className="mt-2">
                   <p className="text-sm text-gray-500">
                     This is a list of your current NFTs
                   </p>
-                  <Selector />
+                  <div className="flex flex-row flex-wrap">
+                    <div className="max-w-lg p-5">
+                      <div>Controls</div>
+                      <div>Save</div>
+                      <button
+                        type="button"
+                        className="inline-flex justify-center px-4 py-2 text-sm font-medium text-blue-900 bg-blue-100 border border-transparent rounded-md hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Close
+                      </button>
+                    </div>
+                    <div className="flex-1 max-h-96 overflow-y-auto">
+                      <Selector />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="mt-4"></div>
