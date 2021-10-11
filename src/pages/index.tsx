@@ -8,7 +8,6 @@ import Chain from "components/Chain";
 import styles from "../styles/Home.module.css";
 import { useNfts } from "modules/nfts";
 import Avatar from "components/Avatar";
-import AvatarSelector from "components/AvatarSelector";
 
 const Home: NextPage = () => {
   useEagerConnect();
@@ -49,8 +48,6 @@ const Home: NextPage = () => {
         <h1 className={styles.title}>
           Welcome to <a href="https://nextjs.org">Next.js!</a>
         </h1>
-
-        <AvatarSelector />
       </main>
 
       <footer className={styles.footer}>
