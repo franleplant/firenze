@@ -8,10 +8,11 @@ generator client {
 }
 
 model AuthorProfile {
-  author    String   @db.VarChar(255) @id
-  profile   String   @db.VarChar(255)
-  timestamp DateTime @default(now())
-  isDeleted Boolean  @default(false)
+  author      String   @db.VarChar(255) @id
+  description String   @db.VarChar(255)
+  avatar      String   @db.VarChar(255)
+  timestamp   DateTime @default(now())
+  // isDeleted   Boolean  @default(false)
 }
 
 model AuthorPost {
@@ -19,6 +20,8 @@ model AuthorPost {
   post      String @db.VarChar(255) @id
   timestamp DateTime @default(now())
   isDeleted Boolean  @default(false)
+
+  @@index([author], map: "idx_authorpost_author")
 }
 
 model AuthorPostHead {
@@ -31,6 +34,9 @@ model Follow {
   fromUser  String @db.VarChar(255)
   toUser    String @db.VarChar(255)
   timestamp DateTime @default(now())
+
+  @@index([fromUser], map: "idx_follow_fromUser")
+  @@index([toUser], map: "idx_follow_toUser")
 }
 
 model PostLike {
@@ -38,9 +44,13 @@ model PostLike {
   post  String @db.VarChar(255)
   liker String @db.VarChar(255)
   timestamp DateTime @default(now())
+
+  @@index([post], map: "idx_postlike_post")
 }
 
 model PostResponse {
   fromPost String @db.VarChar(255) @id
   toPost String @db.VarChar(255)
+
+  @@index([toPost], map: "idx_postresponse_topost")
 }
