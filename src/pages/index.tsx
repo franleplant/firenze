@@ -4,14 +4,14 @@ import Meta from "../components/Meta";
 import Header from "../components/home/Header";
 import NewTweet from "../components/home/NewTweet";
 
-type tweet = {
+interface ITweet {
 	author: string;
 	content: string;
 	date: string;
 	id: string;
-};
+}
 
-export const tweets: tweet[] = [
+export const tweets: ITweet[] = [
 	{ author: "Toto 1", content: "First Content asdasd normal content i guess 1 ", date: "2hrs ago", id: "1" },
 	{ author: "Toto 2 Totera tomo arigato", content: "Short content 2", date: "2hrs ago", id: "2" },
 	{
