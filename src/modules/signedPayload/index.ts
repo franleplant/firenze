@@ -35,5 +35,5 @@ export function isValid<T>(signedPayload: ISignedPayload<T>): boolean {
     signature
   );
 
-  return expectedSigner !== signer;
+  return expectedSigner === signer;
 }

@@ -13,7 +13,7 @@ import AvatarSelector from "components/AvatarSelector";
 import { useSaveProfile } from "client/io/profile";
 import useLibrary from "client/modules/wallet/useLibrary";
 
-import { sign } from "modules/signedPayload";
+import { isValid, sign } from "modules/signedPayload";
 
 const Profile: NextPage = () => {
   const saveProfile = useSaveProfile();
