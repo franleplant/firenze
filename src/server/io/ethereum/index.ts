@@ -1,7 +1,11 @@
 import { ethers } from "ethers";
 
-export function getProvider(chain: string): ethers.providers.BaseProvider {
-  const provider = ethers.getDefaultProvider(chain, {
+// TODO memoize this
+export function getProvider(
+  chain: string | number
+): ethers.providers.BaseProvider {
+  // castin as any since it accepts numbers but the types don't reflect that
+  const provider = ethers.getDefaultProvider(chain as any, {
     infura: {
       projectId: process.env.INFURA_PROJECT_ID,
       projectSecret: process.env.INFURA_PROJECT_SECRET,
@@ -17,14 +21,14 @@ export async function isNftOwner({
   ownerAddress,
   tokenAddress,
   tokenId,
-  chain,
+  chainId,
 }: {
   ownerAddress: string;
   tokenAddress: string;
   tokenId: string;
-  chain: string;
+  chainId: string | number;
 }): Promise<boolean> {
-  const provider = getProvider(chain);
+  const provider = getProvider(chainId);
 
   // TODO i just copied the erc721 standard, should we do
   // something more fancy with this?

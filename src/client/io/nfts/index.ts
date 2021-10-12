@@ -2,8 +2,10 @@
 
 import { useQuery, UseQueryResult } from "react-query";
 import { useChain } from "client/modules/wallet";
-import type { IResult } from "server/io/moralis";
+import type { IResult, INFT } from "server/io/moralis";
 import { getNFTs } from "./provider";
+
+export type { IResult, INFT };
 
 export function useNfts(
   account: string | undefined | null

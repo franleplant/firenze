@@ -3,16 +3,21 @@ import Head from "next/head";
 import { useEagerConnect, useWeb3React } from "client/modules/wallet";
 import Account from "components/Account";
 import Chain from "components/Chain";
+import { ethers } from "ethers";
 
 import styles from "../styles/Home.module.css";
-import { useNfts } from "client/io/nfts";
+import { useNfts, INFT } from "client/io/nfts";
 import Avatar from "components/Avatar";
 import AvatarSelector from "components/AvatarSelector";
+import { useSaveProfile } from "client/io/profile";
+import useLibrary from "client/modules/wallet/useLibrary";
 
 const Profile: NextPage = () => {
+  const saveProfile = useSaveProfile();
   useEagerConnect();
   // TODO handle error
-  const { account, active } = useWeb3React();
+  const { account, active, chainId } = useWeb3React();
+  const library = useLibrary();
   const { data: nfts } = useNfts(account);
 
   // TODO abstract
@@ -27,6 +32,39 @@ const Profile: NextPage = () => {
 
   if (!active || !account) {
     return <div>Please login</div>;
+  }
+
+  async function onSave(nft: INFT | undefined) {
+    // TODO make this an invariant
+    if (!active || !account || !chainId) {
+      throw new Error(`this should never happen`);
+    }
+    const payload = {
+      chainId,
+      // TODO if undefined it should remove the entries in the db
+      nftAddress: nft?.token_address,
+      nftId: nft?.token_id,
+    };
+
+    const signer = library?.getSigner();
+    const signature = await signer?.signMessage(JSON.stringify(payload));
+    if (!signature) {
+      throw new Error(`this should never happen`);
+    }
+
+    const signedPayload = {
+      signer: account,
+      signature,
+      payload: payload,
+    };
+    console.log(nft);
+
+    try {
+      await saveProfile.mutateAsync(signedPayload);
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
   }
 
   return (
@@ -45,7 +83,7 @@ const Profile: NextPage = () => {
 
         <h1 className={styles.title}>Profile</h1>
 
-        <AvatarSelector />
+        <AvatarSelector onSave={onSave} />
       </main>
     </div>
   );

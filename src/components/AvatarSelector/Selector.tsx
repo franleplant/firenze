@@ -1,14 +1,16 @@
 import React, { useState } from "react";
 import { RadioGroup } from "@headlessui/react";
 import { useWeb3React } from "client/modules/wallet";
-import { useNfts } from "client/io/nfts";
+import { useNfts, INFT } from "client/io/nfts";
 import Item from "./Item";
 import { getMetadata } from "domain/nfts";
 
-export interface IProps {}
+export interface IProps {
+  value: INFT | undefined;
+  onChange: (value: INFT) => void;
+}
 
 export default function AvatarSelector(props: IProps) {
-  const [avatar, setAvatar] = useState(0);
   const { account } = useWeb3React();
   const { data, isLoading } = useNfts(account);
 
@@ -26,8 +28,14 @@ export default function AvatarSelector(props: IProps) {
 
   const result = data?.result || [];
 
+  function onChange(value: number) {
+    props.onChange(result[value]);
+  }
+
+  const value = result.findIndex((element) => props.value === element);
+
   return (
-    <RadioGroup value={avatar} onChange={setAvatar}>
+    <RadioGroup value={value} onChange={onChange}>
       <div className="space-y-2">
         {result.map((nft, index) => {
           const meta = getMetadata(nft);

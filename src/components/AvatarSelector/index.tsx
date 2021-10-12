@@ -1,9 +1,20 @@
 import { useState, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import Selector from "./Selector";
+import { INFT } from "client/io/nfts";
 
-export default function AvatarSelectorModal() {
+export interface IProps {
+  onSave: (nft: INFT | undefined) => Promise<void>;
+}
+
+export default function AvatarSelectorModal(props: IProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [value, onChange] = useState<INFT | undefined>();
+
+  async function onSave(nft: INFT | undefined) {
+    await props.onSave(nft);
+    setIsOpen(false);
+  }
 
   return (
     <Fragment>
@@ -62,7 +73,8 @@ export default function AvatarSelectorModal() {
                   <div className="flex flex-row flex-wrap">
                     <div className="max-w-lg p-5">
                       <div>Controls</div>
-                      <div>Save</div>
+                      <div onClick={() => onSave(value)}>Save</div>
+                      {/* TODO abstract into Button component */}
                       <button
                         type="button"
                         className="inline-flex justify-center px-4 py-2 text-sm font-medium text-blue-900 bg-blue-100 border border-transparent rounded-md hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500"
@@ -70,9 +82,13 @@ export default function AvatarSelectorModal() {
                       >
                         Close
                       </button>
+
+                      <div className="overflow-hidden">
+                        Selected <code>{JSON.stringify(value)}</code>
+                      </div>
                     </div>
                     <div className="flex-1 max-h-96 overflow-y-auto">
-                      <Selector />
+                      <Selector value={value} onChange={onChange} />
                     </div>
                   </div>
                 </div>
