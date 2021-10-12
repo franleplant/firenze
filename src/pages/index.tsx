@@ -4,6 +4,13 @@ import Meta from "../components/Meta";
 import Header from "../components/home/Header";
 import NewTweet from "../components/home/NewTweet";
 
+import { useConnect, useEagerConnect, useWeb3React } from "client/modules/wallet";
+import Account from "components/Account";
+import Chain from "components/Chain";
+
+import { useNfts } from "client/io/nfts";
+import Avatar from "components/Avatar";
+
 type tweet = {
 	author: string;
 	content: string;
@@ -33,6 +40,7 @@ export const tweets: tweet[] = [
 	{ author: "Toto 13", content: "First Content 13", date: "2hrs ago", id: "13" },
 	{ author: "Toto 14", content: "First Content 14", date: "2hrs ago", id: "14" },
 	{ author: "Toto 15", content: "First Content 15", date: "2hrs ago", id: "15" },
+
 	{ author: "Toto 16", content: "First Content 16", date: "2hrs ago", id: "16" },
 	{ author: "Toto 17", content: "First Content 17", date: "2hrs ago", id: "17" },
 	{ author: "Toto 18", content: "First Content 18", date: "2hrs ago", id: "18" },
@@ -40,6 +48,22 @@ export const tweets: tweet[] = [
 ];
 
 const Home: NextPage = () => {
+	useEagerConnect();
+	// TODO handle error
+	const { account, active } = useWeb3React();
+	const login = useConnect();
+	const { data: nfts } = useNfts(account);
+
+	// TODO abstract
+	const avatarUrl = (() => {
+		// Grab the first, but evenutally grab the chosen one
+		const meta = nfts?.result?.find((element) => !!element.metadata);
+		if (!meta) {
+			return;
+		}
+		return JSON.parse(meta.metadata)?.image;
+	})();
+
 	return (
 		<>
 			<Meta title={"Firenze"} />
@@ -52,6 +76,15 @@ const Home: NextPage = () => {
 							<Tweet author={author} content={content} date={date} />
 						</div>
 					))}
+					{/* TODO this should be part of a "nav" or "header" */}
+					{active && account ? (
+						<div>
+							Hello <Account /> on <Chain />
+							<Avatar url={avatarUrl} />
+						</div>
+					) : (
+						<button onClick={login}>Login with metamask</button>
+					)}
 				</section>
 			</main>
 		</>
