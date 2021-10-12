@@ -1,9 +1,9 @@
 import { useMutation, UseMutationResult } from "react-query";
 import fetch from "isomorphic-fetch";
-// TODO move this elsewhere
-import type { ISignedPayload, IProfile } from "pages/api/user/[pubkey]/profile";
+import type { ISignedPayload } from "modules/signedPayload";
+import type { IProfile } from "pages/api/user/[pubkey]/profile";
 
-export type { ISignedPayload, IProfile };
+export type { IProfile };
 
 export function useSaveProfile(): UseMutationResult<
   unknown,

@@ -1,17 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import invariant from "ts-invariant";
-import { ethers } from "ethers";
-import { getProvider, isNftOwner } from "server/io/ethereum";
-
-// TODO this general purppose interfaces need to be
-// refactored, abstracted and associated with functional methods
-export interface ISignedPayload<T> {
-  /** pub key */
-  signer: string;
-  payload: T;
-  /** sign(hash(payload))*/
-  signature: string;
-}
+import { isNftOwner } from "server/io/ethereum";
+import { ISignedPayload, isValid } from "modules/signedPayload";
 
 export interface IProfile {
   // These two (signer) are primary key
@@ -39,14 +29,10 @@ export default async function (
 
   if (req.method === "POST") {
     // TODO validate / schema this
-    const { signer, payload, signature } = req.body as ISignedPayload<IProfile>;
+    const signedPayload = req.body as ISignedPayload<IProfile>;
+    const { signer, payload } = signedPayload;
 
-    // Validate the cryptographic signature
-    const expectedSigner = ethers.utils.verifyMessage(
-      JSON.stringify(payload),
-      signature
-    );
-    if (expectedSigner !== signer) {
+    if (!isValid(signedPayload)) {
       return res.status(401).send({ error: true, message: "bad signature" });
     }
 

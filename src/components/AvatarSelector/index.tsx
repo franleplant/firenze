@@ -82,10 +82,6 @@ export default function AvatarSelectorModal(props: IProps) {
                       >
                         Close
                       </button>
-
-                      <div className="overflow-hidden">
-                        Selected <code>{JSON.stringify(value)}</code>
-                      </div>
                     </div>
                     <div className="flex-1 max-h-96 overflow-y-auto">
                       <Selector value={value} onChange={onChange} />

@@ -1,5 +1,6 @@
 import type { NextPage } from "next";
 import Head from "next/head";
+import invariant from "ts-invariant";
 import { useEagerConnect, useWeb3React } from "client/modules/wallet";
 import Account from "components/Account";
 import Chain from "components/Chain";
@@ -11,6 +12,8 @@ import Avatar from "components/Avatar";
 import AvatarSelector from "components/AvatarSelector";
 import { useSaveProfile } from "client/io/profile";
 import useLibrary from "client/modules/wallet/useLibrary";
+
+import { sign } from "modules/signedPayload";
 
 const Profile: NextPage = () => {
   const saveProfile = useSaveProfile();
@@ -35,10 +38,9 @@ const Profile: NextPage = () => {
   }
 
   async function onSave(nft: INFT | undefined) {
-    // TODO make this an invariant
-    if (!active || !account || !chainId) {
-      throw new Error(`this should never happen`);
-    }
+    invariant(!!active && !!account && !!chainId, "user must be logged in");
+    invariant(!!library, "a provider must be available");
+
     const payload = {
       chainId,
       // TODO if undefined it should remove the entries in the db
@@ -46,18 +48,7 @@ const Profile: NextPage = () => {
       nftId: nft?.token_id,
     };
 
-    const signer = library?.getSigner();
-    const signature = await signer?.signMessage(JSON.stringify(payload));
-    if (!signature) {
-      throw new Error(`this should never happen`);
-    }
-
-    const signedPayload = {
-      signer: account,
-      signature,
-      payload: payload,
-    };
-    console.log(nft);
+    const signedPayload = await sign(library, account, payload);
 
     try {
       await saveProfile.mutateAsync(signedPayload);
