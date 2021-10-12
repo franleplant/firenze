@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { RadioGroup } from "@headlessui/react";
 import { INFT } from "server/io/moralis";
 import { getMetadata } from "domain/nfts";

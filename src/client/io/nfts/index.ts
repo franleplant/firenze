@@ -1,11 +1,10 @@
 /** reactive wrappers of io module */
 
 import { useQuery, UseQueryResult } from "react-query";
-import { useChain } from "modules/wallet";
+import { useChain } from "client/modules/wallet";
 import type { IResult } from "server/io/moralis";
-import { getNFTs } from "./io";
+import { getNFTs } from "./provider";
 
-// TODO if it returns "SYNCING" we should try again
 export function useNfts(
   account: string | undefined | null
 ): UseQueryResult<IResult | undefined> {

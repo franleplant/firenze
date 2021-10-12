@@ -1,12 +1,16 @@
 import type { NextPage } from "next";
 import Head from "next/head";
 import Image from "next/image";
-import { useConnect, useEagerConnect, useWeb3React } from "modules/wallet";
+import {
+  useConnect,
+  useEagerConnect,
+  useWeb3React,
+} from "client/modules/wallet";
 import Account from "components/Account";
 import Chain from "components/Chain";
 
 import styles from "../styles/Home.module.css";
-import { useNfts } from "modules/nfts";
+import { useNfts } from "client/io/nfts";
 import Avatar from "components/Avatar";
 
 const Home: NextPage = () => {

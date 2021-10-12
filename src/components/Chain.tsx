@@ -1,5 +1,5 @@
 import React from "react";
-import { useChain } from "modules/wallet";
+import { useChain } from "client/modules/wallet";
 
 export default function Chain() {
   const chain = useChain();

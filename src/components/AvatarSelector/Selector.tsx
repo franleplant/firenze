@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { RadioGroup } from "@headlessui/react";
-import { useWeb3React } from "modules/wallet";
-import { useNfts } from "modules/nfts";
+import { useWeb3React } from "client/modules/wallet";
+import { useNfts } from "client/io/nfts";
 import Item from "./Item";
 import { getMetadata } from "domain/nfts";
 

@@ -1,5 +1,5 @@
 import React from "react";
-import { useEnsName, useWeb3React } from "modules/wallet";
+import { useEnsName, useWeb3React } from "client/modules/wallet";
 
 export default function Account() {
   const { active, account } = useWeb3React();
