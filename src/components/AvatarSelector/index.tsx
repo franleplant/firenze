@@ -4,18 +4,20 @@ import Selector from "./Selector";
 import { INFT } from "client/io/nfts";
 
 export interface IProps {
+  value: INFT | undefined;
   onSave: (nft: INFT | undefined) => Promise<void>;
 }
 
 export default function AvatarSelectorModal(props: IProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [value, onChange] = useState<INFT | undefined>();
+  const [value, onChange] = useState<INFT | undefined>(props.value);
 
   async function onSave(nft: INFT | undefined) {
     await props.onSave(nft);
     setIsOpen(false);
   }
 
+  // TODO abstract all the UI modal stuff into a resuable component
   return (
     <Fragment>
       <button

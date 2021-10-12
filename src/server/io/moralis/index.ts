@@ -1,5 +1,7 @@
 /** Input output (network requests, etc) */
+import { CHAIN_INFO } from "client/modules/wallet";
 import fetch from "isomorphic-fetch";
+import invariant from "ts-invariant";
 
 const BASE_URL = `https://deep-index.moralis.io/api/v2`;
 
@@ -27,7 +29,7 @@ export interface IResult {
   result: Array<INFT>;
 }
 
-export async function getNFTs(
+export async function getUserNFTs(
   account: string,
   chain: string | undefined
 ): Promise<IResult> {
@@ -38,6 +40,29 @@ export async function getNFTs(
       "X-API-Key": process.env.MORALIS_API_KEY!,
     },
   });
+  const body = await res.json();
+
+  return body;
+}
+
+export async function getNFT(
+  tokenAddress: string,
+  tokenId: string,
+  chainId: string | number
+): Promise<INFT> {
+  const chain = CHAIN_INFO[Number(chainId)];
+  invariant(chain, "bad chain");
+
+  const res = await fetch(
+    `${BASE_URL}/nft/${tokenAddress}/${tokenId}?chain=${chain.label.toString()}`,
+    {
+      headers: {
+        accept: "application/json",
+        // TODO better typed wrappers for env vairbales
+        "X-API-Key": process.env.MORALIS_API_KEY!,
+      },
+    }
+  );
   const body = await res.json();
 
   return body;

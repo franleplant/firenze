@@ -4,34 +4,29 @@ import invariant from "ts-invariant";
 import { useEagerConnect, useWeb3React } from "client/modules/wallet";
 import Account from "components/Account";
 import Chain from "components/Chain";
-import { ethers } from "ethers";
 
 import styles from "../styles/Home.module.css";
 import { useNfts, INFT } from "client/io/nfts";
 import Avatar from "components/Avatar";
 import AvatarSelector from "components/AvatarSelector";
-import { useSaveProfile } from "client/io/profile";
+import { useProfile, useSaveProfile } from "client/io/profile";
 import useLibrary from "client/modules/wallet/useLibrary";
 
-import { isValid, sign } from "modules/signedPayload";
+import { sign } from "modules/signedPayload";
 
 const Profile: NextPage = () => {
-  const saveProfile = useSaveProfile();
   useEagerConnect();
   // TODO handle error
   const { account, active, chainId } = useWeb3React();
   const library = useLibrary();
   const { data: nfts } = useNfts(account);
 
+  console.log(nfts);
+  const saveProfile = useSaveProfile();
+  const { data: profile } = useProfile(account, chainId);
+
   // TODO abstract
-  const avatarUrl = (() => {
-    // Grab the first, but evenutally grab the chosen one
-    const meta = nfts?.result?.find((element) => !!element.metadata);
-    if (!meta) {
-      return;
-    }
-    return JSON.parse(meta.metadata)?.image;
-  })();
+  const avatarUrl = JSON.parse(profile?.nft?.metadata || "{}")?.image;
 
   if (!active || !account) {
     return <div>Please login</div>;
@@ -51,6 +46,7 @@ const Profile: NextPage = () => {
     const signedPayload = await sign(library, account, payload);
 
     try {
+      // TODO handle error and loading states
       await saveProfile.mutateAsync(signedPayload);
     } catch (err) {
       console.error(err);
@@ -74,7 +70,7 @@ const Profile: NextPage = () => {
 
         <h1 className={styles.title}>Profile</h1>
 
-        <AvatarSelector onSave={onSave} />
+        <AvatarSelector onSave={onSave} value={profile?.nft} />
       </main>
     </div>
   );
