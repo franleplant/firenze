@@ -4,11 +4,11 @@
 
 html,
 body {
-	min-height: 100%;
-	box-sizing: border-box;
-	@apply bg-trueGray-900;
+  min-height: 100%;
+  box-sizing: border-box;
+  @apply bg-trueGray-900;
 }
 
 #__next {
-	height: 100%;
+  height: 100%;
 }
