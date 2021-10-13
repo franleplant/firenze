@@ -10,8 +10,18 @@
 
 import { useWeb3React } from "@web3-react/core";
 import { CHAIN_INFO } from "./chains";
+import getLibrary from "./getLibrary";
 
 import { useConnect, useEagerConnect } from "./hooks";
+import useChain from "./useChain";
 import useEnsName from "./useEnsName";
 
-export { useConnect, useEagerConnect, useEnsName, useWeb3React, CHAIN_INFO };
+export {
+  useChain,
+  useConnect,
+  useEagerConnect,
+  useEnsName,
+  useWeb3React,
+  getLibrary,
+  CHAIN_INFO,
+};
