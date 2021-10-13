@@ -72,8 +72,8 @@ export default async function (
         author: signer,
         chainId: chainId,
         nftId: nftId,
-        nftAddress: nftAddress
-      }
+        nftAddress: nftAddress,
+      },
     });
 
     return res.status(200).send({ ok: true, profile });
@@ -87,8 +87,8 @@ export default async function (
     const profile = await db.authorProfile.findFirst({
       where: {
         author: pubkey as string,
-        chainId: chainId as string
-      }
+        chainId: chainId as string,
+      },
     });
 
     let nft = {};
