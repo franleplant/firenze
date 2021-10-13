@@ -3,14 +3,13 @@ import invariant from "ts-invariant";
 import { isNftOwner } from "server/io/ethereum";
 import { ISignedPayload, isValid } from "modules/signedPayload";
 import { getNFT, INFT } from "server/io/moralis";
+import { CHAIN_INFO } from "client/modules/wallet";
 
+// TODO move this type elsewhere (maybe use db)
 export interface IProfile {
-  // These two (signer) are primary key
-  // TODO make a more broad support for multiple chains
-  // the hooks we have in place return chainId as a number identifier,
-  // we shoujld probably use that across the board
-  /** chain id */
-  chainId: number;
+  // TODO primary key: chainId and signer
+  // TODO remove as not needed
+  chainId: string | number | undefined;
 
   /** contract address */
   nftAddress: string | undefined;
@@ -22,7 +21,14 @@ export default async function (
   req: NextApiRequest,
   res: NextApiResponse
 ): Promise<void> {
-  const { pubkey } = req.query;
+  const { pubkey, chainId } = req.query;
+
+  // TODO abstract into a reusbale middleware
+  invariant(typeof chainId === "string");
+
+  const chain = CHAIN_INFO[Number(chainId)];
+  invariant(chain);
+
   invariant(
     typeof pubkey === "string",
     "pubkey must be present and of type string"
@@ -38,7 +44,7 @@ export default async function (
     }
 
     // verify that the chosen nft is owned by the author
-    const { nftAddress, nftId, chainId } = payload;
+    const { nftAddress, nftId } = payload;
     let nft: INFT | undefined;
     // if the nft isn't present then the call is erasing this data
     if (nftAddress && nftId) {
