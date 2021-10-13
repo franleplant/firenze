@@ -13,12 +13,13 @@
     "format-check": "yarn prettier --check",
     "ci": "yarn lint && yarn format-check && yarn typecheck",
     "prepare": "husky install",
-    "dev-db": "docker-compose -f dev-db/docker-compose.yml --env-file dev-db/.env up"
+    "db": "docker-compose -f dev-db/docker-compose.yml --env-file dev-db/.env up",
+    "db-update": "npx prisma migrate dev"
   },
   "dependencies": {
     "@ethersproject/providers": "^5.4.5",
-    "@prisma/client": "^3.2.1",
     "@headlessui/react": "^1.4.1",
+    "@prisma/client": "^3.2.1",
     "@web3-react/core": "^6.1.9",
     "@web3-react/injected-connector": "^6.0.7",
     "ethers": "^5.4.7",
