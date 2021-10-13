@@ -8,6 +8,7 @@ export default async function getNFTHandler(
   res: NextApiResponse<INFT>
 ): Promise<void> {
   const { chainId, tokenAddress, tokenId } = req.query;
+  // TODO abstract into a reusbale middleware
   invariant(typeof chainId === "string");
   invariant(typeof tokenAddress === "string");
   invariant(typeof tokenId === "string");

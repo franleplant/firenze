@@ -1,7 +1,7 @@
 /** reactive wrappers of io module */
 
 import { useQuery, UseQueryResult } from "react-query";
-import { useChain, useWeb3React } from "client/modules/wallet";
+import { useChain } from "client/modules/wallet";
 import type { IResult, INFT } from "server/io/moralis";
 import { getNFTs } from "./provider";
 
