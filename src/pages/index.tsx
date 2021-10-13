@@ -1,8 +1,8 @@
 import type { NextPage } from "next";
-import Tweet from "../components/home/Tweet";
-import Meta from "../components/Meta";
-import Header from "../components/home/Header";
-import NewTweet from "../components/home/NewTweet";
+import Tweet from "components/home/Tweet";
+import Meta from "components/Meta";
+import Header from "components/home/Header";
+import NewTweet from "components/home/NewTweet";
 
 import {
   useConnect,
