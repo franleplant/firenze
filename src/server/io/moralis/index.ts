@@ -54,7 +54,7 @@ export async function getNFT(
   invariant(chain, "bad chain");
 
   const res = await fetch(
-    `${BASE_URL}/nft/${tokenAddress}/${tokenId}?chain=${chain.label.toString()}`,
+    `${BASE_URL}/nft/${tokenAddress}/${tokenId}?chain=${chain.label.toLowerCase()}`,
     {
       headers: {
         accept: "application/json",
