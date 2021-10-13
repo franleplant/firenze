@@ -10,15 +10,15 @@ export type { IResult, INFT };
 export function useNfts(
   account: string | undefined | null
 ): UseQueryResult<IResult | undefined> {
-  const chain = useChain();
+  const { chainId } = useWeb3React();
   return useQuery({
     queryKey: "user-nfts",
-    enabled: !!(chain && account),
+    enabled: !!(chainId && account),
     queryFn: async () => {
-      if (!(chain && account)) {
+      if (!(chainId && account)) {
         return;
       }
-      const nfts = await getNFTs(account!, chain.label.toLowerCase());
+      const nfts = await getNFTs(account!, chainId);
       if (nfts.status !== "SYNCED") {
         console.log(`nfts still not synced, failing and retrying...`);
         throw new Error(`nfts still not synced`);

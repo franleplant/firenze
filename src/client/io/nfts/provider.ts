@@ -4,9 +4,9 @@ import type { INFT, IResult } from "server/io/moralis";
 
 export async function getNFTs(
   account: string,
-  chain: string
+  chainId: string | number
 ): Promise<IResult> {
-  const res = await fetch(`/api/user/${account}/nfts?chain=${chain}`);
+  const res = await fetch(`/api/chain/${chainId}/user/${account}/nfts`);
   const body = await res.json();
 
   return body;

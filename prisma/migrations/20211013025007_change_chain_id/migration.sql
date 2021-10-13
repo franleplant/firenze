@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "AuthorProfile" ALTER COLUMN "chainId" SET DATA TYPE VARCHAR(255);

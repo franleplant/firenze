@@ -1,10 +1,13 @@
+import { CHAIN_INFO } from "client/modules/wallet";
 import { ethers } from "ethers";
+import invariant from "ts-invariant";
 
 // TODO memoize this
 export function getProvider(
   chain: string | number
 ): ethers.providers.BaseProvider {
   // castin as any since it accepts numbers but the types don't reflect that
+  // TODO is this really using our infura stuff?
   const provider = ethers.getDefaultProvider(chain as any, {
     infura: {
       projectId: process.env.INFURA_PROJECT_ID,
@@ -28,7 +31,10 @@ export async function isNftOwner({
   tokenId: string;
   chainId: string | number;
 }): Promise<boolean> {
-  const provider = getProvider(chainId);
+  // TODO abstract
+  const chain = CHAIN_INFO[Number(chainId)];
+  invariant(chain, "should provide a valid chain");
+  const provider = getProvider(chain.label.toLowerCase());
 
   // TODO i just copied the erc721 standard, should we do
   // something more fancy with this?

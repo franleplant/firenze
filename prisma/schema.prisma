@@ -10,7 +10,7 @@ generator client {
 model AuthorProfile {
   author      String    @db.VarChar(255) @id
   description String?   @db.VarChar(255)
-  chainId     Int
+  chainId     String    @db.VarChar(255)
   nftAddress  String?   @db.VarChar(255)
   nftId       String?   @db.VarChar(255)
   createdAt   DateTime  @default(now())

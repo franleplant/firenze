@@ -3,15 +3,14 @@ import invariant from "ts-invariant";
 import { isNftOwner } from "server/io/ethereum";
 import { ISignedPayload, isValid } from "modules/signedPayload";
 import { getNFT, INFT } from "server/io/moralis";
+import { CHAIN_INFO } from "client/modules/wallet";
 import { db } from "server/io/db";
 
+// TODO move this type elsewhere (maybe use db)
 export interface IProfile {
-  // These two (signer) are primary key
-  // TODO make a more broad support for multiple chains
-  // the hooks we have in place return chainId as a number identifier,
-  // we shoujld probably use that across the board
-  /** chain id */
-  chainId: number;
+  // TODO primary key: chainId and signer
+  // TODO remove as not needed
+  chainId: string | number | undefined;
 
   /** contract address */
   nftAddress: string | undefined;
@@ -23,7 +22,14 @@ export default async function (
   req: NextApiRequest,
   res: NextApiResponse
 ): Promise<void> {
-  const { pubkey } = req.query;
+  const { pubkey, chainId } = req.query;
+
+  // TODO abstract into a reusbale middleware
+  invariant(typeof chainId === "string");
+
+  const chain = CHAIN_INFO[Number(chainId)];
+  invariant(chain);
+
   invariant(
     typeof pubkey === "string",
     "pubkey must be present and of type string"
@@ -39,7 +45,7 @@ export default async function (
     }
 
     // verify that the chosen nft is owned by the author
-    const { nftAddress, nftId, chainId } = payload;
+    const { nftAddress, nftId } = payload;
     let nft: INFT | undefined;
     // if the nft isn't present then the call is erasing this data
     if (nftAddress && nftId) {
@@ -61,7 +67,6 @@ export default async function (
     }
 
     // TODO Store the new profile in IPFS
-    // TODO Save references to our db
     const profile = await db.authorProfile.create({
       data: {
         author: signer,
@@ -78,38 +83,19 @@ export default async function (
     const { chainId, pubkey } = req.query;
     invariant(typeof chainId === "string");
     invariant(typeof pubkey === "string");
-    // TODO db query by pubKey and chainId
 
-    // return res.status(200).send({
-    //   chainId: Number(chainId),
-    //   nftAddress: "0xc724a926836c66083c20aeb5186b6a140016bcbf",
-    //   nftId: "5",
-    //   nft: {
-    //     amount: "1",
-    //     block_number: "9276660",
-    //     block_number_minted: "9276660",
-    //     contract_type: "ERC721",
-    //     metadata:
-    //       '{"description":"CuCo description","external_url":"/api/nfts/test/5","image":"https://www.cucollectors.com/dog.jpg","name":"CuCo test","attributes":[{"trait_type":"Kind","value":"Test"}]}',
-    //     name: "Cuco_test_3",
-    //     owner_of: "0x7dce8a09ae403863dbaf9815de20e4a7bb18ae9d",
-    //     symbol: "CCT3",
-    //     synced_at: "2021-10-09T21:33:58.579Z",
-    //     token_address: "0xc724a926836c66083c20aeb5186b6a140016bcbf",
-    //     token_id: "5",
-    //     token_uri: "https://www.cucollectors.com/api/nfts/test/5",
-    //   },
-    // } as IProfile & { nft: INFT | undefined });
     const profile = await db.authorProfile.findFirst({
       where: {
         author: pubkey as string,
-        chainId: Number.parseInt(chainId as string)
+        chainId: chainId as string
       }
     });
+
     let nft = {};
     if (profile?.nftAddress && profile?.nftId) {
       nft = await getNFT(profile?.nftAddress, profile?.nftId, Number(chainId));
     }
+
     return res.status(200).send({
       chainId: Number(chainId),
       nftAddress: profile?.nftAddress,
