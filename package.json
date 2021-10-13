@@ -13,7 +13,7 @@
     "format-check": "yarn prettier --check",
     "ci": "yarn lint && yarn format-check && yarn typecheck",
     "prepare": "husky install",
-    "db": "docker-compose -f dev-db/docker-compose.yml --env-file dev-db/.env up",
+    "db": "docker-compose -f dev-db/docker-compose.yml --env-file dev-db/.config up",
     "db-update": "npx prisma migrate dev"
   },
   "dependencies": {
