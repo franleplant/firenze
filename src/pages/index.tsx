@@ -9,11 +9,15 @@ import {
 import Account from "components/Account";
 import Chain from "components/Chain";
 
+import { useState } from "react";
 import styles from "../styles/Home.module.css";
 import { useNfts } from "client/io/nfts";
 import Avatar from "components/Avatar";
+import MyModal from "components/Modal";
 
 const Home: NextPage = () => {
+  // Use State for opening and closing MODAL
+  const [isOpen, setIsOpen] = useState<boolean>(false);
   useEagerConnect();
   // TODO handle error
   const { account, active } = useWeb3React();
@@ -30,6 +34,10 @@ const Home: NextPage = () => {
     return JSON.parse(meta.metadata)?.image;
   })();
 
+  // Function to call after modal primary button onClick
+  const onClickFunction = () => {
+    alert("this function ran after clicking on modal primary button");
+  };
   return (
     <div className="">
       <Head>
@@ -39,6 +47,26 @@ const Home: NextPage = () => {
       </Head>
 
       <main className={styles.main}>
+        {/* Modal trigger could vary this is for testing and demo */}
+        <div className="flex items-center justify-center p-10">
+          <button
+            type="button"
+            onClick={() => setIsOpen(true)}
+            className="px-4 py-2 text-sm font-medium text-white bg-black rounded-md bg-opacity-20 hover:bg-opacity-30 "
+          >
+            Open Modal
+          </button>
+        </div>
+        <MyModal
+          title={"Are you sure you want to do X?"}
+          content={"Hello im testing a modal"}
+          primaryButtonText={"Okey"}
+          secondaryButtonText={"Cancel"}
+          isOpen={isOpen}
+          isDanger={true}
+          setIsOpen={setIsOpen}
+          onClickFunction={onClickFunction}
+        />
         {/* TODO this should be part of a "nav" or "header" */}
         {active && account ? (
           <div>
