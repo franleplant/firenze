@@ -12,6 +12,9 @@ import Chain from "components/Chain";
 import styles from "../styles/Home.module.css";
 import { useNfts } from "client/io/nfts";
 import Avatar from "components/Avatar";
+import PrimaryButton from "components/buttons/PrimaryButton";
+import SecondaryButton from "components/buttons/SecondaryButton";
+import LinkButton from "components/buttons/LinkButton";
 
 const Home: NextPage = () => {
   useEagerConnect();
@@ -20,6 +23,9 @@ const Home: NextPage = () => {
   const login = useConnect();
   const { data: nfts } = useNfts(account);
 
+  const testFunction = (text: string) => {
+    alert("Hi i ran from index " + text);
+  };
   // TODO abstract
   const avatarUrl = (() => {
     // Grab the first, but evenutally grab the chosen one
@@ -39,6 +45,15 @@ const Home: NextPage = () => {
       </Head>
 
       <main className={styles.main}>
+        {/* UI-Buttons */}
+        <PrimaryButton onClick={testFunction} onClickArgs={["toto"]}>
+          Click Me!
+        </PrimaryButton>
+        <SecondaryButton onClick={testFunction} onClickArgs={["toto"]}>
+          Secondary Button
+        </SecondaryButton>
+        <LinkButton href="#">Link Button</LinkButton>
+        {/* UI-Buttons */}
         {/* TODO this should be part of a "nav" or "header" */}
         {active && account ? (
           <div>
