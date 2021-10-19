@@ -22,7 +22,7 @@ const PrimaryButton: FC<IProps> = ({
   helpText,
   helpTextClassName = "absolute py-2 px-4 rounded-2xl bg-gray-500 text-white z-10 top-14 shadow-xl",
 }) => {
-  const [hover, setHover] = useState(true);
+  const [hover, setHover] = useState<boolean>(false);
 
   const onHover = () => {
     setHover(true);
