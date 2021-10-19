@@ -46,7 +46,11 @@ const Home: NextPage = () => {
 
       <main className={styles.main}>
         {/* UI-Buttons */}
-        <PrimaryButton onClick={testFunction} onClickArgs={["toto"]}>
+        <PrimaryButton
+          onClick={testFunction}
+          onClickArgs={["toto"]}
+          helpText={"This is an onHover help text"}
+        >
           Click Me!
         </PrimaryButton>
         <SecondaryButton onClick={testFunction} onClickArgs={["toto"]}>

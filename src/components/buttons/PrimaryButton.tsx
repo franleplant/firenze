@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { FC, useState } from "react";
 
 interface IProps {
   children: FC | string | number;
@@ -6,10 +6,12 @@ interface IProps {
   onClick: (...args: any[]) => void;
   onClickArgs?: any[];
   disabled?: boolean;
+  helpText?: string;
+  helpTextClassName?: string;
 }
 
 const defaultClassName: string =
-  "px-4 sm:px-6 py-2 sm:py-3 rounded-md bg-blue-700 hover:bg-blue-600 text-gray-100 hover:text-white";
+  "relative px-4 sm:px-6 py-2 sm:py-3 rounded-md bg-blue-700 hover:bg-blue-600 text-gray-100 hover:text-white";
 
 const PrimaryButton: FC<IProps> = ({
   className = defaultClassName,
@@ -17,20 +19,38 @@ const PrimaryButton: FC<IProps> = ({
   children,
   onClickArgs = [],
   disabled = false,
+  helpText,
+  helpTextClassName = "absolute py-2 px-4 rounded-2xl bg-gray-500 text-white z-10 top-14 shadow-xl",
 }) => {
+  const [hover, setHover] = useState(true);
+
+  const onHover = () => {
+    setHover(true);
+  };
+
+  const onLeave = () => {
+    setHover(false);
+  };
+
   const handleClick = () => {
     onClick(...onClickArgs!);
   };
 
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      className={className}
-      disabled={disabled}
-    >
-      {children}
-    </button>
+    <section className="relative flex justify-center m-auto">
+      {helpText && hover && <div className={helpTextClassName}>{helpText}</div>}
+
+      <button
+        type="button"
+        onClick={handleClick}
+        className={className}
+        disabled={disabled}
+        onMouseEnter={onHover}
+        onMouseLeave={onLeave}
+      >
+        {children}
+      </button>
+    </section>
   );
 };
 
