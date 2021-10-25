@@ -1,12 +1,13 @@
 import Head from "next/head";
+import { FC } from "react";
 
-interface Iprop {
+interface IProps {
   title: string;
   name?: string;
   content?: string;
 }
 
-const Meta = ({ title, name, content }: Iprop) => {
+const Meta: FC<IProps> = ({ title, name, content }: IProps) => {
   return (
     <Head>
       <title>{title}</title>

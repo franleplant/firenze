@@ -6,13 +6,15 @@ import {
   ShareIcon,
   AnnotationIcon,
 } from "@heroicons/react/outline";
-interface Iprop {
+import { FC } from "react";
+
+interface IProps {
   author: string;
   content: string;
   date: string;
 }
 
-const Tweet = ({ author, content, date }: Iprop) => {
+const Tweet: FC<IProps> = ({ author, content, date }: IProps) => {
   return (
     <div className="px-2 pt-2">
       <section className="h-full flex items-center">
