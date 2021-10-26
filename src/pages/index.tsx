@@ -13,7 +13,7 @@ import { useState } from "react";
 import styles from "../styles/Home.module.css";
 import { useNfts } from "client/io/nfts";
 import Avatar from "components/Avatar";
-import MyModal from "components/Modal";
+import Modal from "components/Modal";
 
 const Home: NextPage = () => {
   // Use State for opening and closing MODAL
@@ -57,16 +57,19 @@ const Home: NextPage = () => {
             Open Modal
           </button>
         </div>
-        <MyModal
+        <Modal
           title={"Are you sure you want to do X?"}
-          content={"Hello im testing a modal"}
           primaryButtonText={"Okey"}
           secondaryButtonText={"Cancel"}
           isOpen={isOpen}
           isDanger={true}
-          setIsOpen={setIsOpen}
-          onClickFunction={onClickFunction}
-        />
+          onClose={() => setIsOpen(false)}
+          onPrimaryClick={onClickFunction}
+          onSecondaryClick={onClickFunction}
+        >
+          Hello im testing a modal
+        </Modal>
+
         {/* TODO this should be part of a "nav" or "header" */}
         {active && account ? (
           <div>

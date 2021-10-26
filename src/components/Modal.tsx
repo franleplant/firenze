@@ -1,40 +1,52 @@
 import { Dialog, Transition } from "@headlessui/react";
-import { Dispatch, FC, Fragment, SetStateAction, useState } from "react";
+import { FC, Fragment, ReactNode } from "react";
 
 interface IProps {
-  title: string;
-  content: string;
-  primaryButtonText: string;
+  title?: string | ReactNode | (() => ReactNode);
+  children: string | ReactNode | (() => ReactNode);
+  primaryButtonText: string | ReactNode | (() => ReactNode);
+  onPrimaryClick: () => void;
   secondaryButtonText?: string;
+  onSecondaryClick?: () => void;
+  // onSecondaryClick?: any;
   isDanger?: boolean;
   isOpen: boolean;
-  setIsOpen: Dispatch<SetStateAction<boolean>>;
-  onClickFunction?: (...args: any[]) => void;
+  onClose: () => void;
 }
 
-const MyModal: FC<IProps> = ({
-  title,
-  content,
-  primaryButtonText,
-  secondaryButtonText,
-  isDanger = false,
-  isOpen,
-  setIsOpen,
-  onClickFunction,
-}) => {
-  const closeModal: VoidFunction = () => {
-    setIsOpen(false);
-  };
+/**
+ * Reusable Modal Infrastructure 
+ * Usage:
+ * 
+   <Modal
+          title={"Are you sure you want to do X?"}  Optional
+      
+          primaryButtonText={"Okey"}
+          secondaryButtonText={"Cancel"}        Optional
+          isOpen={isOpen}                       -> react useState for handling opening and closing.
+          isDanger={true}                       optional, if true main button will change 
+          onClose={() => setIsOpen(false)} 
+          onPrimaryClick={onClickFunction}      Main button onClick function
+          onSecondaryClick={onClickFunction}    Secondary button onClick function, optional, defaults to close modal
+        > 
+       
+        Main content 
+       
+         <Modal/>
+ *
+ *
+ */
 
+const Modal: FC<IProps> = (props) => {
   return (
     <>
-      <Transition appear show={isOpen} as={Fragment}>
+      <Transition appear show={props.isOpen} as={Fragment}>
         <Dialog
           as="div"
           className="fixed inset-0 z-10 overflow-y-auto "
-          onClose={closeModal}
+          onClose={props.onClose}
         >
-          <div className="min-h-screen px-4 text-center ">
+          <div className="min-h-screen px-4 text-center">
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
@@ -64,41 +76,49 @@ const MyModal: FC<IProps> = ({
               leaveTo="opacity-0 scale-95"
             >
               <div className="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left top-0 transition-all transform bg-black shadow-xl rounded-2xl">
-                {title && (
+                {props.title && (
                   <Dialog.Title
                     as="h3"
                     className="text-lg font-medium leading-6 text-gray-50"
                   >
-                    {title}
+                    {props.title}
                   </Dialog.Title>
                 )}
-                <div className="mt-2">
-                  <p className="text-sm text-gray-300">{content}</p>
+                <div className="mt-2 text-gray-300">
+                  {/* <p className='text-sm text-gray-300'>{props.children}</p> */}
+                  {props.children}
                 </div>
 
                 <div className="mt-4 space-x-2 flex justify-end">
-                  {secondaryButtonText && (
+                  {props.secondaryButtonText && (
                     <button
                       type="button"
                       className="inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-300 hover:text-gray-50 bg-gray-800 border border-transparent rounded-md hover:bg-gray-700"
-                      onClick={closeModal}
+                      onClick={
+                        props.onSecondaryClick
+                          ? () => {
+                              props.onSecondaryClick!();
+                              props.onClose();
+                            }
+                          : () => props.onClose()
+                      }
                     >
-                      {secondaryButtonText}
+                      {props.secondaryButtonText}
                     </button>
                   )}
                   <button
                     type="button"
                     className={`inline-flex justify-center px-4 py-2 text-sm font-medium border border-transparent rounded-md ${
-                      isDanger
+                      props.isDanger
                         ? " text-red-800 bg-red-100 hover:bg-red-200 focus-visible:ring-red-500 "
                         : " text-blue-800 bg-blue-100  hover:bg-blue-200 focus-visible:ring-blue-500 "
                     } `}
                     onClick={() => {
-                      closeModal();
-                      onClickFunction && onClickFunction();
+                      props.onPrimaryClick();
+                      props.onClose();
                     }}
                   >
-                    {primaryButtonText}
+                    {props.primaryButtonText}
                   </button>
                 </div>
               </div>
@@ -110,4 +130,4 @@ const MyModal: FC<IProps> = ({
   );
 };
 
-export default MyModal;
+export default Modal;
