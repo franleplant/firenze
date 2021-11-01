@@ -13,6 +13,8 @@ import styles from "../styles/Home.module.css";
 import { useNfts } from "client/io/nfts";
 import Avatar from "components/Avatar";
 
+import { Button } from "antd";
+
 const Home: NextPage = () => {
   useEagerConnect();
   // TODO handle error
@@ -52,6 +54,11 @@ const Home: NextPage = () => {
         <h1 className={styles.title}>
           Welcome to <a href="https://nextjs.org">Next.js!</a>
         </h1>
+        <br />
+        <br />
+        <Button type="primary" href="/posts">
+          Posts
+        </Button>
       </main>
 
       <footer className={styles.footer}>
