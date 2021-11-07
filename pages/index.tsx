@@ -34,6 +34,9 @@ interface IMessage {
   // TODO we should also add a signature from the sender to validate that
   // the sender is effectively the sender
   date: string;
+
+  // TODO specialized
+  transient?: boolean;
 }
 
 function pushToQ(msg: IMessage) {
@@ -79,13 +82,15 @@ function useIpfs(): IPFS | undefined {
 }
 
 const Home: NextPage = () => {
-  const receiverAddress =
-    "0x582f081efE6857Da0E29ED2C3ce28455a63e67B7".toLowerCase();
+  const [receiverAddress, setReceiverAddress] = useState(
+    "0x7dCE8a09aE403863dbAf9815DE20E4A7Bb18Ae9D".toLowerCase()
+  );
   const [newMsg, setNewMsg] = useState("");
   const [senderAddress, setSenderAddress] = useState("");
 
   const [messageIds, setMessageIds] = useState<Array<string>>([]);
   const [messages, setMessages] = useState<Array<IMessage>>([]);
+  const [transientMessages, setTransientMessages] = useState<Array<IMessage>>([]);
   const ipfs = useIpfs();
 
   useEffect(() => {
@@ -108,26 +113,26 @@ const Home: NextPage = () => {
       //console.log("self", self);
 
       //const posts: Array<IMessage> = "0"
-        //.repeat(3)
-        //.split("")
-        //.map((index) => ({
-          //// TODO we need to create two entries per single message
-          //// and assign it a single message id (uuid),
-          //// one will be encrypted for the receiver and one for the sender,
-          //// using there respective public keys
-          //from: addresses[0],
-          //to: "userB",
-          //// TODO posts need to be signed with the receiver's public key
-          //content: "hello userB",
-          //// TODO we should also add a signature from the sender to validate that
-          //// the sender is effectively the sender
-          //date: new Date().toISOString(),
-        //}));
+      //.repeat(3)
+      //.split("")
+      //.map((index) => ({
+      //// TODO we need to create two entries per single message
+      //// and assign it a single message id (uuid),
+      //// one will be encrypted for the receiver and one for the sender,
+      //// using there respective public keys
+      //from: addresses[0],
+      //to: "userB",
+      //// TODO posts need to be signed with the receiver's public key
+      //content: "hello userB",
+      //// TODO we should also add a signature from the sender to validate that
+      //// the sender is effectively the sender
+      //date: new Date().toISOString(),
+      //}));
 
       //const postCids = await Promise.all(
-        //posts.map((post) =>
-          //ipfs?.add(new TextEncoder().encode(JSON.stringify(post)))
-        //)
+      //posts.map((post) =>
+      //ipfs?.add(new TextEncoder().encode(JSON.stringify(post)))
+      //)
       //);
       //console.log("posts", posts, postCids);
 
@@ -145,11 +150,22 @@ const Home: NextPage = () => {
           return;
         }
 
-        console.log("fetching inbox")
+        console.log("fetching inbox");
         const cids: Array<string> = [];
         snapshot.forEach((async (child: DataSnapshot) => {
           // TODO validations
           const msg = child.val() as IMessage;
+          setTransientMessages(msgs => {
+            return [...msgs, msg]
+          })
+
+          // remove the transient message
+          // TODO make this better
+          setTimeout(() => {
+            setTransientMessages(m => {
+              return m.filter(m => m !== msg)
+            })
+          }, 2000)
           // store the msg in ipfs
           const { path } = await ipfs!.add(
             new TextEncoder().encode(JSON.stringify(msg))
@@ -170,7 +186,7 @@ const Home: NextPage = () => {
         //);
 
         const profile = await self.get("basicProfile");
-        const messageIds =  [...profile.firenzePosts, ...cids]
+        const messageIds = [...profile.firenzePosts, ...cids];
         await self.set("basicProfile", {
           // store references into ceramic
           firenzePosts: messageIds,
@@ -183,12 +199,12 @@ const Home: NextPage = () => {
       //
 
       //await self.set("basicProfile", {
-        //firenzePosts: postCids.map((p) => p?.path),
+      //firenzePosts: postCids.map((p) => p?.path),
       //});
 
       const profile = await self.get("basicProfile");
       console.log("profile", profile);
-        setMessageIds(profile.firenzePosts);
+      setMessageIds(profile.firenzePosts);
     }
 
     if (ipfs) {
@@ -226,10 +242,25 @@ const Home: NextPage = () => {
 
   return (
     <div>
-      <p>Sending to {receiverAddress}</p>
+      <div style={{ padding: "10px" }}>
+        <label>Send to</label>
+        <input
+          type="text"
+          value={receiverAddress}
+          onChange={(e) =>
+            setReceiverAddress(e.target.value?.toLowerCase() || "")
+          }
+          style={{
+            width: "500px",
+            padding: "5px",
+            marginLeft: "10px",
+          }}
+        />
+      </div>
       <form
         onSubmit={async (e) => {
           e.preventDefault();
+          // TODO store this message in our stream too
           await pushToQ({
             from: senderAddress,
             to: receiverAddress,
@@ -243,18 +274,25 @@ const Home: NextPage = () => {
           type="text"
           value={newMsg}
           onChange={(e) => setNewMsg(e.target.value)}
+          style={{
+            width: "500px",
+            padding: "5px",
+            marginLeft: "10px",
+          }}
         />
         <button type="submit">Send</button>
       </form>
-      <div>
-        {messages.sort((a,b) => a.date > b.date ? -1 : 1).map((msg, index) => (
-          <div
-            key={index}
-            style={{ padding: "10px", border: "1px solid grey" }}
-          >
-            {JSON.stringify(msg, null, 2)}
-          </div>
-        ))}
+      <div style={{ padding: "10px" }}>
+        {[...messages, ...(transientMessages.map(m => ({...m, transient: true})))]
+          .sort((a, b) => (a.date > b.date ? -1 : 1))
+          .map((msg, index) => (
+            <div
+              key={index}
+              style={{ padding: "10px", border: "1px solid grey", background: msg.transient ? "grey" : "white" }}
+            >
+              {JSON.stringify(msg, null, 2)}
+            </div>
+          ))}
       </div>
     </div>
   );
