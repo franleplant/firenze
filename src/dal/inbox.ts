@@ -1,11 +1,5 @@
 import { useFirebase } from "components/Firebase";
-import {
-  ref,
-  set,
-  onValue,
-  push,
-  remove,
-} from "firebase/database";
+import { ref, set, onValue, push, remove } from "firebase/database";
 import { useEffect, useRef } from "react";
 import { useMutation, UseMutationResult } from "react-query";
 import { IMessage } from "./message";
@@ -25,7 +19,7 @@ export function usePushToInbox(): UseMutationResult<
 }
 
 export type OnMessage = (
-  messages: Array<{ pop: () => {}; msg: IMessage }>
+  messages: Array<{ pop: () => Promise<void>; msg: IMessage }>
 ) => void;
 
 export function useInbox(address: string | undefined, onMessage: OnMessage) {

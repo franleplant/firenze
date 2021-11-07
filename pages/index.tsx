@@ -15,7 +15,11 @@ import {
 } from "firebase/database";
 import { useWallet } from "components/Wallet";
 import Message from "components/Message";
-import { useSaveMessage } from "dal/message";
+import {
+  useMessageHistory,
+  useSaveMessage,
+  useSaveMessageHistory,
+} from "dal/message";
 import { useInbox, usePushToInbox } from "dal/inbox";
 import Composer from "components/Composer";
 
@@ -46,7 +50,8 @@ const Home: NextPage = () => {
     "0x7dCE8a09aE403863dbAf9815DE20E4A7Bb18Ae9D".toLowerCase()
   );
 
-  const [messageIds, setMessageIds] = useState<Array<string>>([]);
+  const { data: messageIds = [], isLoading } = useMessageHistory();
+  const { mutateAsync: saveMessageHistory } = useSaveMessageHistory();
   //const [messages, setMessages] = useState<Array<IMessage>>([]);
   //const [transientMessages, setTransientMessages] = useState<Array<IMessage>>( []);
 
@@ -54,31 +59,23 @@ const Home: NextPage = () => {
     if (!selfID) {
       return;
     }
-    const cids = await Promise.all(
+    const newCids = await Promise.all(
       messages.map(async ({ msg, pop }) => {
         // store the msg in ipfs
         const path = await saveMessage({ msg });
         // TODO show queed messages and their status
-        // remove from q
-        pop();
-
         return path;
       })
     );
 
-    const profile = await selfID.get("basicProfile");
-    const messageIds = [...profile.firenzePosts, ...cids];
-    await selfID.set("basicProfile", {
-      // store references into ceramic
-      // TODO it would be nice to store also dates here to make it simpler to order by date
-      firenzePosts: messageIds,
-    });
+    await saveMessageHistory(newCids);
 
-    setMessageIds(messageIds);
+    // remove all messages from q
+    await Promise.all(messages.map(({ pop }) => pop()));
   });
 
-  if (!selfID || !address) {
-    return <div>loading...</div>
+  if (!selfID || !address || (isLoading && messageIds?.length === 0)) {
+    return <div>loading...</div>;
   }
 
   return (
