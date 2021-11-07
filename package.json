@@ -5,10 +5,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "prettier": "prettier \"./{src,pages}/**/*.{js,jsx,ts,tsx,css,md}\"",
+    "format": "yarn prettier --write",
+    "format-check": "yarn prettier --check"
   },
   "dependencies": {
-    "next": "12.0.3",
+    "@self.id/web": "^0.1.0",
+    "firebase": "^9.3.0",
+    "ipfs-core": "^0.11.1",
+    "next": "12.0.1",
     "react": "17.0.2",
     "react-dom": "17.0.2"
   },
@@ -17,6 +24,7 @@
     "@types/react": "17.0.34",
     "eslint": "7",
     "eslint-config-next": "12.0.3",
+    "prettier": "^2.4.1",
     "typescript": "4.4.4"
   }
 }

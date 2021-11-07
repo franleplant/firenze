@@ -1,5 +1,8 @@
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
+This fucking thing needs to run next 12.0.1 becuase of this issue https://github.com/vercel/next.js/issues/30750
+is related to modules and old stnadards becomeing practical standars and everything that is affected by it.
+
 ## Getting Started
 
 First, run the development server:
