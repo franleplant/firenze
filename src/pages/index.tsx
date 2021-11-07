@@ -1,6 +1,5 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import Image from "next/image";
 import {
   useConnect,
   useEagerConnect,
@@ -12,6 +11,8 @@ import Chain from "components/Chain";
 import styles from "../styles/Home.module.css";
 import { useNfts } from "client/io/nfts";
 import Avatar from "components/Avatar";
+import useSelfID from "client/modules/wallet/useSelfID";
+import { useRouter } from "next/dist/client/router";
 
 const Home: NextPage = () => {
   useEagerConnect();
@@ -19,6 +20,10 @@ const Home: NextPage = () => {
   const { account, active } = useWeb3React();
   const login = useConnect();
   const { data: nfts } = useNfts(account);
+
+  // ceramic tests
+  const { data: selfID } = useSelfID();
+  const router = useRouter();
 
   // TODO abstract
   const avatarUrl = (() => {
@@ -50,21 +55,21 @@ const Home: NextPage = () => {
         )}
 
         <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
+          Welcome to Firenze
         </h1>
+
+        <button onClick={() => router.push("/posts")}>My Posts</button>
+        <button onClick={() => router.push("/posts/creation")}>Create a Post</button>
+
       </main>
 
       <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{" "}
-          <span className={styles.logo}>
-            <Image src="/vercel.svg" alt="Vercel Logo" width={72} height={16} />
-          </span>
-        </a>
+          Ceramic SelfID ID: 
+          {selfID ? (
+            <> {selfID?.id}</>
+          ) : (
+            <>Not available</>
+          )}
       </footer>
     </div>
   );
