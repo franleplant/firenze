@@ -1,21 +1,12 @@
 import type { NextPage } from "next";
 import { useEffect, useState } from "react";
-import { useIpfs } from "components/IPFS";
 import { useSelfID } from "components/SelfID";
-import { initializeApp } from "firebase/app";
-import {
-  getDatabase,
-  ref,
-  set,
-  onValue,
-  onChildAdded,
-  push,
-  remove,
-  DataSnapshot,
-} from "firebase/database";
+import { v4 as uuid } from "uuid";
 import { useWallet } from "components/Wallet";
 import Message from "components/Message";
+import MessageFromPath from "components/MessageFromPath";
 import {
+  IMessage,
   useMessageHistory,
   useSaveMessage,
   useSaveMessageHistory,
@@ -43,6 +34,12 @@ const Home: NextPage = () => {
   const { selfID } = useSelfID();
   const { address } = useWallet();
 
+  // TODO find better name, these are the messages that were found in the Q
+  // and are in the process of being saved into ipfs and ceramic
+  // But also i am calling inbox to the q itself, to it does not make sense
+  const [inbox, setInbox] = useState<Array<{ msg: IMessage; pop: () => void }>>(
+    []
+  );
   const { mutateAsync: saveMessage } = useSaveMessage();
   const { mutateAsync: pushToInbox } = usePushToInbox();
 
@@ -61,6 +58,7 @@ const Home: NextPage = () => {
     }
     const newCids = await Promise.all(
       messages.map(async ({ msg, pop }) => {
+        setInbox((inbox) => [...inbox, { msg, pop }]);
         // store the msg in ipfs
         const path = await saveMessage({ msg });
         // TODO show queed messages and their status
@@ -71,8 +69,25 @@ const Home: NextPage = () => {
     await saveMessageHistory(newCids);
 
     // remove all messages from q
-    await Promise.all(messages.map(({ pop }) => pop()));
+    //await Promise.all(messages.map(({ pop }) => pop()));
   });
+
+  function onMessageLoad(msg: IMessage) {
+    setInbox((inbox) => {
+      const byId = (other: { msg: IMessage; pop: () => void }) =>
+        msg.id === other.msg.id;
+
+      const msgAlreadyInCeramic = inbox.find(byId);
+      if (!msgAlreadyInCeramic) {
+        //console.warn(`tried to remove ${JSON.stringify(msg)} from inbox, but didn't find it`);
+        return inbox;
+      }
+
+      msgAlreadyInCeramic.pop();
+
+      return inbox.filter((other) => !byId(other));
+    });
+  }
 
   if (!selfID || !address || (isLoading && messageIds?.length === 0)) {
     return <div>loading...</div>;
@@ -103,6 +118,7 @@ const Home: NextPage = () => {
           // TODO store this message in our stream too
           await pushToInbox({
             msg: {
+              id: uuid(),
               from: address,
               to: receiverAddress,
               date: new Date().toISOString(),
@@ -113,11 +129,11 @@ const Home: NextPage = () => {
         }}
       />
       <div style={{ padding: "10px" }}>
-        {[
-          ...messageIds,
-          //...transientMessages.map((m) => ({ ...m, transient: true })),
-        ].map((cid) => (
-          <Message key={cid} path={cid} />
+        {inbox.map(({ msg }) => (
+          <Message key={msg.id} msg={msg} style={{ background: "grey" }} />
+        ))}
+        {[...messageIds].reverse().map((cid) => (
+          <MessageFromPath key={cid} path={cid} onSuccess={onMessageLoad} />
         ))}
       </div>
     </div>

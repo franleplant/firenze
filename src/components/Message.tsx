@@ -1,21 +1,22 @@
-import { useMessage } from "dal/message";
+import { IMessage } from "dal/message";
 
 export interface IProps {
-  path: string;
+  msg: IMessage | undefined;
+  isLoading?: boolean;
+  style?: any;
 }
 
 export default function Message(props: IProps) {
-  const { data: msg, isLoading } = useMessage(props.path);
-
   return (
     <div
       style={{
         padding: "10px",
         border: "1px solid grey",
-        background: msg?.transient ? "grey" : "white",
+        //background: props.msg?.transient ? "grey" : "white",
+        ...props.style,
       }}
     >
-      {isLoading ? "Loading..." : JSON.stringify(msg, null, 2)}
+      {props.isLoading ? "Loading..." : JSON.stringify(props.msg, null, 2)}
     </div>
   );
 }

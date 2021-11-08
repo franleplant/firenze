@@ -19,7 +19,7 @@ export function usePushToInbox(): UseMutationResult<
 }
 
 export type OnMessage = (
-  messages: Array<{ pop: () => Promise<void>; msg: IMessage }>
+  messages: Array<{ pop: () => void; msg: IMessage }>
 ) => void;
 
 export function useInbox(address: string | undefined, onMessage: OnMessage) {
