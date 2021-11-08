@@ -1,4 +1,5 @@
 import type { NextPage } from "next";
+import uniqBy from 'lodash.uniqby'
 import { useEffect, useState } from "react";
 import { useSelfID } from "components/SelfID";
 import { v4 as uuid } from "uuid";
@@ -129,7 +130,7 @@ const Home: NextPage = () => {
         }}
       />
       <div style={{ padding: "10px" }}>
-        {inbox.map(({ msg }) => (
+        {uniqBy(inbox, 'msg.id').map(({ msg }) => (
           <Message key={msg.id} msg={msg} style={{ background: "grey" }} />
         ))}
         {[...messageIds].reverse().map((cid) => (
