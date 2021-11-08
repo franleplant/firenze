@@ -24,6 +24,7 @@ import Composer from "components/Composer";
 // - ENS domains
 //
 //
+//
 
 interface Window {
   ethereum: any;
