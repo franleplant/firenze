@@ -1,18 +1,32 @@
+/**
+ * The mailbox is the place where messages not received yet are stored.
+ * It updates in real time and it's the heart and bit of the system.
+ * The mailbox acts as a in between place for messages, where they
+ * after they get sent and before they get received.
+ *
+ * TODO eventually the mailbox should be more robust and
+ * have a policiy about long lived messages that haven't
+ * been read in x amount of time.
+ */
 import { useFirebase } from "components/Firebase";
 import { ref, set, onValue, push, remove } from "firebase/database";
 import { useEffect, useRef } from "react";
 import { useMutation, UseMutationResult } from "react-query";
 import { IMessage } from "./message";
 
-export function usePushToInbox(): UseMutationResult<
+export function useSaveToMailbox(): UseMutationResult<
   void,
   unknown,
-  { msg: IMessage }
+  {
+    msg: IMessage;
+    /** whose inbox? by default it goes to the "to" or recipient */
+    address?: string;
+  }
 > {
   const { db } = useFirebase();
 
-  return useMutation(async ({ msg }) => {
-    const inboxRef = ref(db, `inbox/${msg.to}`);
+  return useMutation(async ({ msg, address }) => {
+    const inboxRef = ref(db, `inbox/${address || msg.to}`);
     const key = push(inboxRef);
     return set(key, msg);
   });
@@ -22,7 +36,7 @@ export type OnMessage = (
   messages: Array<{ pop: () => void; msg: IMessage }>
 ) => void;
 
-export function useInbox(address: string | undefined, onMessage: OnMessage) {
+export function useMailbox(address: string | undefined, onMessage: OnMessage) {
   const { db } = useFirebase();
   const inbox = ref(db, `inbox/${address}`);
 

@@ -1,18 +1,15 @@
 import type { NextPage } from "next";
-import uniqBy from 'lodash.uniqby'
+import uniqBy from "lodash.uniqby";
 import { useEffect, useState } from "react";
 import { useSelfID } from "components/SelfID";
 import { v4 as uuid } from "uuid";
 import { useWallet } from "components/Wallet";
 import Message from "components/Message";
 import MessageFromPath from "components/MessageFromPath";
-import {
-  IMessage,
-  useMessageHistory,
-  useSaveMessage,
-  useSaveMessageHistory,
-} from "dal/message";
-import { useInbox, usePushToInbox } from "dal/inbox";
+import { IMessage, useSaveMessage } from "dal/message";
+
+import { useArchive, useSaveArchive } from "dal/archive";
+import { useMailbox, useSaveToMailbox } from "dal/mailbox";
 import Composer from "components/Composer";
 
 //
@@ -24,6 +21,7 @@ import Composer from "components/Composer";
 //   - first get the message from the Q and display it
 //   - give the user the chance to chose not to store it in ceramic
 //   - build UI to display this change in status (msg in memory, msg in ceramic, msg rejected)
+// - ENS domains
 //
 //
 
@@ -35,25 +33,23 @@ const Home: NextPage = () => {
   const { selfID } = useSelfID();
   const { address } = useWallet();
 
-  // TODO find better name, these are the messages that were found in the Q
-  // and are in the process of being saved into ipfs and ceramic
-  // But also i am calling inbox to the q itself, to it does not make sense
+  // This is the inbox, the eventually consistent copy of new messages in the mailbox
   const [inbox, setInbox] = useState<Array<{ msg: IMessage; pop: () => void }>>(
     []
   );
   const { mutateAsync: saveMessage } = useSaveMessage();
-  const { mutateAsync: pushToInbox } = usePushToInbox();
+  const { mutateAsync: SaveToMailbox } = useSaveToMailbox();
 
   const [receiverAddress, setReceiverAddress] = useState(
     "0x7dCE8a09aE403863dbAf9815DE20E4A7Bb18Ae9D".toLowerCase()
   );
 
-  const { data: messageIds = [], isLoading } = useMessageHistory();
-  const { mutateAsync: saveMessageHistory } = useSaveMessageHistory();
+  const { data: archive = [], isLoading } = useArchive();
+  const { mutateAsync: saveMessageHistory } = useSaveArchive();
   //const [messages, setMessages] = useState<Array<IMessage>>([]);
   //const [transientMessages, setTransientMessages] = useState<Array<IMessage>>( []);
 
-  useInbox(address, async (messages) => {
+  useMailbox(address, async (messages) => {
     if (!selfID) {
       return;
     }
@@ -90,14 +86,36 @@ const Home: NextPage = () => {
     });
   }
 
-  if (!selfID || !address || (isLoading && messageIds?.length === 0)) {
+  async function onSend(newMsg: string) {
+    if (!address) {
+      throw new Error(`we fucked up`);
+    }
+
+    const msg = {
+      id: uuid(),
+      from: address,
+      to: receiverAddress,
+      date: new Date().toISOString(),
+      content: newMsg,
+    };
+
+    // send it to the recipient mailbox
+    // and also to the sender mailbox, to be processed
+    // and archived
+    await Promise.all([
+      SaveToMailbox({ msg, address: msg.to }),
+      SaveToMailbox({ msg, address: msg.from }),
+    ]);
+  }
+
+  if (!selfID || !address || (isLoading && archive?.length === 0)) {
     return <div>loading...</div>;
   }
 
   return (
     <div>
       <div style={{ padding: "10px" }}>
-        <label>Send to</label>
+        <label>Conversation with</label>
         <input
           type="text"
           value={receiverAddress}
@@ -111,30 +129,33 @@ const Home: NextPage = () => {
           }}
         />
       </div>
-      <Composer
-        onSend={async (newMsg) => {
-          if (!address) {
-            throw new Error(`we fucked up`);
-          }
-          // TODO store this message in our stream too
-          await pushToInbox({
-            msg: {
-              id: uuid(),
-              from: address,
-              to: receiverAddress,
-              date: new Date().toISOString(),
-              content: newMsg,
-            },
-          });
-          console.log("DONE!");
+      <Composer onSend={onSend} />
+      <div
+        style={{
+          marginTop: "20px",
+          padding: "10px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "10px",
+          maxWidth: "900px",
+          background: "#FAFAFA",
         }}
-      />
-      <div style={{ padding: "10px" }}>
-        {uniqBy(inbox, 'msg.id').map(({ msg }) => (
-          <Message key={msg.id} msg={msg} style={{ background: "grey" }} />
+      >
+        {uniqBy(inbox, "msg.id").map(({ msg }) => (
+          <Message
+            key={msg.id}
+            msg={msg}
+            style={{ background: "grey" }}
+            address={address}
+          />
         ))}
-        {[...messageIds].reverse().map((cid) => (
-          <MessageFromPath key={cid} path={cid} onSuccess={onMessageLoad} />
+        {[...archive].reverse().map((cid) => (
+          <MessageFromPath
+            key={cid}
+            path={cid}
+            onSuccess={onMessageLoad}
+            address={address}
+          />
         ))}
       </div>
     </div>
