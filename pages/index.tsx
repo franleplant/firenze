@@ -52,6 +52,7 @@ const Home: NextPage = () => {
 
   useMailbox(address, async (messages) => {
     if (!selfID) {
+      console.log("No selfid");
       return;
     }
     const newCids = await Promise.all(
