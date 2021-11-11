@@ -46,7 +46,7 @@ export function useSaveArchive(): UseMutationResult<
       }
 
       const profile = await selfID.get("basicProfile");
-      const messageIds = [...profile.firenzePosts || [], ...cids];
+      const messageIds = [...(profile.firenzePosts || []), ...cids];
       await selfID.set("basicProfile", {
         // store references into ceramic
         // TODO it would be nice to store also dates here to make it simpler to order by date

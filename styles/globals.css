@@ -14,3 +14,46 @@ a {
 * {
   box-sizing: border-box;
 }
+
+.page-container {
+  /*max-width: 900px;*/
+  margin: auto;
+  background: #EEE;
+  padding: 10px;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.container {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+}
+
+.contacts__container {
+  max-width: 400px;
+}
+
+.contact__item {
+  padding: 10px;
+  background: white;
+  border: 1px solid #CCC;
+  font-size: 10px;
+  cursor: pointer;
+  min-width: 230px;
+}
+
+.messages__container {
+  flex: 1;
+  max-height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+
+
+.messages_composer {
+  height: 50px;
+  padding: 10px;
+}

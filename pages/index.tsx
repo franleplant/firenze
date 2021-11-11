@@ -1,4 +1,7 @@
 import type { NextPage } from "next";
+import { useRouter } from "next/router";
+import Link from "next/link";
+import invariant from "ts-invariant";
 import uniqBy from "lodash.uniqby";
 import { useEffect, useState } from "react";
 import { useSelfID } from "components/SelfID";
@@ -31,6 +34,8 @@ interface Window {
 }
 
 const Home: NextPage = () => {
+  const router = useRouter();
+
   const { selfID } = useSelfID();
   const { address } = useWallet();
 
@@ -93,10 +98,10 @@ const Home: NextPage = () => {
       throw new Error(`we fucked up`);
     }
 
-    const msg = {
+    const msg: IMessage = {
       id: uuid(),
       from: address,
-      to: receiverAddress,
+      to: receiverAddress as string,
       date: new Date().toISOString(),
       content: newMsg,
     };
@@ -115,50 +120,80 @@ const Home: NextPage = () => {
   }
 
   return (
-    <div>
-      <div style={{ padding: "10px" }}>
-        <label>Conversation with</label>
-        <input
-          type="text"
-          value={receiverAddress}
-          onChange={(e) =>
-            setReceiverAddress(e.target.value?.toLowerCase() || "")
-          }
-          style={{
-            width: "500px",
-            padding: "5px",
-            marginLeft: "10px",
-          }}
-        />
-      </div>
-      <Composer onSend={onSend} />
-      <div
-        style={{
-          marginTop: "20px",
-          padding: "10px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "10px",
-          maxWidth: "900px",
-          background: "#FAFAFA",
-        }}
-      >
-        {uniqBy(inbox, "msg.id").map(({ msg }) => (
-          <Message
-            key={msg.id}
-            msg={msg}
-            style={{ background: "grey" }}
-            address={address}
-          />
-        ))}
-        {[...archive].reverse().map((cid) => (
-          <MessageFromPath
-            key={cid}
-            path={cid}
-            onSuccess={onMessageLoad}
-            address={address}
-          />
-        ))}
+    <div className="page-container">
+      <div className="container">
+        <div className="contacts__container">
+          {[
+            {
+              address: "0x6f98518890604Aa8aC740E66806bCa93613E3CDe".toLowerCase(),
+              name: "lucas",
+            },
+            {
+              address: "0x7dCE8a09aE403863dbAf9815DE20E4A7Bb18Ae9D".toLowerCase(),
+              name: "fran",
+            },
+          ].map((contact) => (
+            <div
+              key={contact.address}
+              className="contact__item"
+              onClick={() => {
+                setReceiverAddress(contact.address);
+              }}
+              style={{
+                background:
+                  contact.address === receiverAddress ? "grey" : "white",
+              }}
+            >
+              <div>{contact.address}</div>
+              <div>{contact.name}</div>
+            </div>
+          ))}
+          <div className="contact__item">
+            <label>Conversation with</label>
+            <input
+              type="text"
+              value={receiverAddress}
+              onChange={(e) =>
+                setReceiverAddress(e.target.value?.toLowerCase() || "")
+              }
+              style={{ width: "100%" }}
+            />
+          </div>
+        </div>
+        <div className="messages__container">
+          <div
+            style={{
+              //marginTop: "20px",
+              padding: "10px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "10px",
+              //maxWidth: "900px",
+              background: "#FAFAFA",
+              overflowY: "scroll",
+            }}
+          >
+            {uniqBy([...archive], e => e).map((cid) => (
+              <MessageFromPath
+                key={cid}
+                path={cid}
+                onSuccess={onMessageLoad}
+                address={address}
+              />
+            ))}
+            {uniqBy(inbox, "msg.id").map(({ msg }) => (
+              <Message
+                key={msg.id}
+                msg={msg}
+                style={{ background: "grey" }}
+                address={address}
+              />
+            ))}
+          </div>
+          <div className="messages_composer">
+            <Composer onSend={onSend} />
+          </div>
+        </div>
       </div>
     </div>
   );
