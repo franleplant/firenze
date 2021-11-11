@@ -4,13 +4,13 @@ import Link from "next/link";
 import invariant from "ts-invariant";
 import uniqBy from "lodash.uniqby";
 import { useEffect, useState } from "react";
-import { useSelfID } from "components/SelfID";
 import { v4 as uuid } from "uuid";
+
+import { useSelfID } from "components/SelfID";
 import { useWallet } from "components/Wallet";
 import Message from "components/Message";
 import MessageFromPath from "components/MessageFromPath";
 import { IMessage, useSaveMessage } from "dal/message";
-
 import { useArchive, useSaveArchive } from "dal/archive";
 import { useMailbox, useSaveToMailbox } from "dal/mailbox";
 import Composer from "components/Composer";

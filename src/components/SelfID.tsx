@@ -1,5 +1,6 @@
 import { useEffect, useState, useContext, createContext } from "react";
 import { EthereumAuthProvider, SelfID } from "@self.id/web";
+
 import { useWallet } from "components/Wallet";
 
 export interface IContext {

@@ -1,3 +1,18 @@
 {
-  "extends": "next/core-web-vitals"
+  "extends": [
+    "next/core-web-vitals",
+    "prettier"
+  ],
+  "rules": {
+    "no-multiple-empty-lines": "error",
+    "import/default": "error",
+    "import/export": "error",
+    "import/first": "error",
+    "import/order": ["error", {"newlines-between": "always"}],
+    "import/newline-after-import": "error",
+    "import/no-anonymous-default-export": "error",
+    "import/no-duplicates": "error",
+    "import/no-import-module-exports": "error",
+    "import/no-useless-path-segments": "error"
+  }
 }

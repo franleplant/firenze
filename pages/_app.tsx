@@ -1,6 +1,7 @@
 import "../styles/globals.css";
 import type { AppProps } from "next/app";
 import { QueryClient, QueryClientProvider } from "react-query";
+
 import { IPFSProvider, useIpfs } from "components/IPFS";
 import { SelfIDProvider, useSelfID } from "components/SelfID";
 import { useWallet, WalletProvider } from "components/Wallet";
