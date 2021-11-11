@@ -125,11 +125,13 @@ const Home: NextPage = () => {
         <div className="contacts__container">
           {[
             {
-              address: "0x6f98518890604Aa8aC740E66806bCa93613E3CDe".toLowerCase(),
+              address:
+                "0x6f98518890604Aa8aC740E66806bCa93613E3CDe".toLowerCase(),
               name: "lucas",
             },
             {
-              address: "0x7dCE8a09aE403863dbAf9815DE20E4A7Bb18Ae9D".toLowerCase(),
+              address:
+                "0x7dCE8a09aE403863dbAf9815DE20E4A7Bb18Ae9D".toLowerCase(),
               name: "fran",
             },
           ].map((contact) => (
@@ -173,7 +175,7 @@ const Home: NextPage = () => {
               overflowY: "scroll",
             }}
           >
-            {uniqBy([...archive], e => e).map((cid) => (
+            {uniqBy([...archive], (e) => e).map((cid) => (
               <MessageFromPath
                 key={cid}
                 path={cid}
