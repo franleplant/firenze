@@ -22,7 +22,7 @@ export function useArchive(): UseQueryResult<Array<string>> {
         return;
       }
       const profile = await selfID.get("basicProfile");
-      return profile.firenzePosts;
+      return profile?.firenzePosts || [];
     },
   });
 }
