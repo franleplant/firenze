@@ -12,7 +12,15 @@ import {
   useQueryClient,
 } from "react-query";
 
-export function useArchive(): UseQueryResult<Array<string>> {
+// TODO eventually this will be something like
+// ipfs://{hash} ethereum://{transaction/contract}
+export type MessageId = string;
+
+export interface IMessageArchive {
+  [pubKey: string]: Array<MessageId>;
+}
+
+export function useArchive(): UseQueryResult<IMessageArchive> {
   const { selfID } = useSelfID();
   return useQuery({
     queryKey: `messageHistory`,
@@ -22,7 +30,7 @@ export function useArchive(): UseQueryResult<Array<string>> {
         return;
       }
       const profile = await selfID.get("basicProfile");
-      return profile?.firenzePosts || [];
+      return profile?.["firenze.messages"] || {};
     },
   });
 }
@@ -33,20 +41,27 @@ export function useArchive(): UseQueryResult<Array<string>> {
  * to your message list in ceramic
  */
 export function useSaveArchive(): UseMutationResult<
-  Array<string>,
+  IMessageArchive,
   unknown,
-  Array<string>
+  IMessageArchive
 > {
   const queryClient = useQueryClient();
   const { selfID } = useSelfID();
   return useMutation(
-    async (cids) => {
+    async (newMessages) => {
       if (!selfID) {
-        return [];
+        return {};
       }
 
       const profile = await selfID.get("basicProfile");
-      const messageIds = [...(profile.firenzePosts || []), ...cids];
+      const archivedMessages = profile?.["firenze.messages"] || {};
+
+      Object.entries(newMessages).forEach(([threadId, messages]) => {
+        // TODO this merge logic needs to be much more robust
+        const oldThreadMessages = archivedMessages[threadId] || [];
+        archivedMessages[threadId] = [...messages, ...oldThreadMessages];
+      });
+
       await selfID.set("basicProfile", {
         // store references into ceramic
         // TODO it would be nice to store also dates here to make it simpler to order by date
@@ -61,14 +76,14 @@ export function useSaveArchive(): UseMutationResult<
         //
         // Also, it would be nice to segment messages by conversations or threads, i.e. conversationWith: [pubKey: string]: ListOfMessages
         //
-        firenzePosts: messageIds,
+        ["firenze.messages"]: archivedMessages,
       });
 
-      return messageIds;
+      return archivedMessages;
     },
     {
-      onSuccess: (newMessageIds) => {
-        queryClient.setQueryData(`messageHistory`, newMessageIds);
+      onSuccess: (messages: IMessageArchive) => {
+        queryClient.setQueryData(`messageHistory`, messages);
       },
     }
   );
