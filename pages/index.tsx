@@ -1,5 +1,4 @@
 import type { NextPage } from "next";
-import { useRouter } from "next/router";
 import invariant from "ts-invariant";
 import uniqBy from "lodash.uniqby";
 import { useEffect, useState } from "react";
@@ -31,6 +30,28 @@ import Composer from "components/Composer";
 interface Window {
   ethereum: any;
 }
+
+export interface IMsgThread {
+  // pubkey
+  address: string;
+  // TODO this is a super place holder
+  name?: string;
+}
+
+const HARDCODED_THREADS: Array<IMsgThread> = [
+  {
+    address: "0x6f98518890604Aa8aC740E66806bCa93613E3CDe".toLowerCase(),
+    name: "lucas",
+  },
+  {
+    address: "0x7dCE8a09aE403863dbAf9815DE20E4A7Bb18Ae9D".toLowerCase(),
+    name: "fran",
+  },
+  {
+    address: "0x9863d00B0b896A0115D00e919227A26F8f3895E1".toLowerCase(),
+    name: "ignacio",
+  },
+];
 
 // TODO abstract away
 interface IInboxMessage {
@@ -147,22 +168,21 @@ const Home: NextPage = () => {
     return <div>loading...</div>;
   }
 
+  const toThread = (pubKey: string) => ({
+    address: pubKey.toLowerCase(),
+  });
+
+  const threads: Array<IMsgThread> = [
+    ...HARDCODED_THREADS,
+    ...Object.keys(archive).map(toThread),
+    ...Object.keys(inbox).map(toThread),
+  ];
+
   return (
     <div className="page-container">
       <div className="container">
         <div className="contacts__container">
-          {[
-            {
-              address:
-                "0x6f98518890604Aa8aC740E66806bCa93613E3CDe".toLowerCase(),
-              name: "lucas",
-            },
-            {
-              address:
-                "0x7dCE8a09aE403863dbAf9815DE20E4A7Bb18Ae9D".toLowerCase(),
-              name: "fran",
-            },
-          ].map((contact) => (
+          {uniqBy(threads, (e) => e.address).map((contact) => (
             <div
               key={contact.address}
               className="contact__item"
@@ -201,6 +221,7 @@ const Home: NextPage = () => {
               //maxWidth: "900px",
               background: "#FAFAFA",
               overflowY: "scroll",
+              flex: "1",
             }}
           >
             {uniqBy(archive[receiverAddress] || [], (e) => e).map((cid) => (
