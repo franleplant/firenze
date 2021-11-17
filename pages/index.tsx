@@ -1,6 +1,4 @@
 import type { NextPage } from "next";
-import { useRouter } from "next/router";
-import Link from "next/link";
 import invariant from "ts-invariant";
 import uniqBy from "lodash.uniqby";
 import { useEffect, useState } from "react";
@@ -11,7 +9,7 @@ import { useWallet } from "components/Wallet";
 import Message from "components/Message";
 import MessageFromPath from "components/MessageFromPath";
 import { IMessage, useSaveMessage } from "dal/message";
-import { useArchive, useSaveArchive } from "dal/archive";
+import { IMessageArchive, useArchive, useSaveArchive } from "dal/archive";
 import { useMailbox, useSaveToMailbox } from "dal/mailbox";
 import Composer from "components/Composer";
 
@@ -33,24 +31,54 @@ interface Window {
   ethereum: any;
 }
 
-const Home: NextPage = () => {
-  const router = useRouter();
+export interface IMsgThread {
+  // pubkey
+  address: string;
+  // TODO this is a super place holder
+  name?: string;
+}
 
+const HARDCODED_THREADS: Array<IMsgThread> = [
+  {
+    address: "0x6f98518890604Aa8aC740E66806bCa93613E3CDe".toLowerCase(),
+    name: "lucas",
+  },
+  {
+    address: "0x7dCE8a09aE403863dbAf9815DE20E4A7Bb18Ae9D".toLowerCase(),
+    name: "fran",
+  },
+  {
+    address: "0x9863d00B0b896A0115D00e919227A26F8f3895E1".toLowerCase(),
+    name: "ignacio",
+  },
+];
+
+// TODO abstract away
+interface IInboxMessage {
+  msg: IMessage;
+  pop: () => void;
+}
+
+// TODO abstract away
+interface IInbox {
+  [threadId: string]: Array<IInboxMessage>;
+}
+
+const Home: NextPage = () => {
   const { selfID } = useSelfID();
   const { address } = useWallet();
 
   // This is the inbox, the eventually consistent copy of new messages in the mailbox
-  const [inbox, setInbox] = useState<Array<{ msg: IMessage; pop: () => void }>>(
-    []
-  );
+  const [inbox, setInbox] = useState<IInbox>({});
   const { mutateAsync: saveMessage } = useSaveMessage();
   const { mutateAsync: SaveToMailbox } = useSaveToMailbox();
 
+  // TODO call this "conversationWith" or something better
   const [receiverAddress, setReceiverAddress] = useState(
     "0x7dCE8a09aE403863dbAf9815DE20E4A7Bb18Ae9D".toLowerCase()
   );
 
-  const { data: archive = [], isLoading } = useArchive();
+  const { data: archive = {}, isLoading } = useArchive();
   const { mutateAsync: saveMessageHistory } = useSaveArchive();
   //const [messages, setMessages] = useState<Array<IMessage>>([]);
   //const [transientMessages, setTransientMessages] = useState<Array<IMessage>>( []);
@@ -62,15 +90,29 @@ const Home: NextPage = () => {
     }
     const newCids = await Promise.all(
       messages.map(async ({ msg, pop }) => {
-        setInbox((inbox) => [...inbox, { msg, pop }]);
+        // TODO explain this shit.
+        // TLDR: since all messages are stored in the mailbox (the ones we receive and the ones we send),
+        // we need to disambugiate
+        const threadId = msg.from === address ? msg.to : msg.from;
+        setInbox((inbox) => {
+          const oldThreadMessages = inbox[threadId] || [];
+          // TODO we need to use immer or somethign like that to make this update easier to read
+          return { ...inbox, [threadId]: [{ msg, pop }, ...oldThreadMessages] };
+        });
         // store the msg in ipfs
         const path = await saveMessage({ msg });
         // TODO show queed messages and their status
-        return path;
+        return [threadId, path] as [threadId: string, path: string];
       })
     );
 
-    await saveMessageHistory(newCids);
+    const archivePatch = {} as IMessageArchive;
+    newCids.forEach(([threadId, path]) => {
+      const old = archivePatch[threadId] || [];
+      archivePatch[threadId] = [path, ...old];
+    });
+
+    await saveMessageHistory(archivePatch);
 
     // remove all messages from q
     //await Promise.all(messages.map(({ pop }) => pop()));
@@ -78,18 +120,25 @@ const Home: NextPage = () => {
 
   function onMessageLoad(msg: IMessage) {
     setInbox((inbox) => {
-      const byId = (other: { msg: IMessage; pop: () => void }) =>
-        msg.id === other.msg.id;
+      const byId = (other: IInboxMessage) => msg.id === other.msg.id;
 
-      const msgAlreadyInCeramic = inbox.find(byId);
+      // TODO explain this shit.
+      // TLDR: since all messages are stored in the mailbox (the ones we receive and the ones we send),
+      // we need to disambugiate
+      const threadId = msg.from === address ? msg.to : msg.from;
+
+      const oldThreadMessages = inbox[threadId] || [];
+      const msgAlreadyInCeramic = oldThreadMessages.find(byId);
       if (!msgAlreadyInCeramic) {
-        //console.warn(`tried to remove ${JSON.stringify(msg)} from inbox, but didn't find it`);
         return inbox;
       }
 
       msgAlreadyInCeramic.pop();
 
-      return inbox.filter((other) => !byId(other));
+      return {
+        ...inbox,
+        [threadId]: oldThreadMessages.filter((other) => !byId(other)),
+      };
     });
   }
 
@@ -115,26 +164,25 @@ const Home: NextPage = () => {
     ]);
   }
 
-  if (!selfID || !address || (isLoading && archive?.length === 0)) {
+  if (!selfID || !address || (isLoading && Object.keys(archive).length === 0)) {
     return <div>loading...</div>;
   }
+
+  const toThread = (pubKey: string) => ({
+    address: pubKey.toLowerCase(),
+  });
+
+  const threads: Array<IMsgThread> = [
+    ...HARDCODED_THREADS,
+    ...Object.keys(archive).map(toThread),
+    ...Object.keys(inbox).map(toThread),
+  ];
 
   return (
     <div className="page-container">
       <div className="container">
         <div className="contacts__container">
-          {[
-            {
-              address:
-                "0x6f98518890604Aa8aC740E66806bCa93613E3CDe".toLowerCase(),
-              name: "lucas",
-            },
-            {
-              address:
-                "0x7dCE8a09aE403863dbAf9815DE20E4A7Bb18Ae9D".toLowerCase(),
-              name: "fran",
-            },
-          ].map((contact) => (
+          {uniqBy(threads, (e) => e.address).map((contact) => (
             <div
               key={contact.address}
               className="contact__item"
@@ -173,9 +221,10 @@ const Home: NextPage = () => {
               //maxWidth: "900px",
               background: "#FAFAFA",
               overflowY: "scroll",
+              flex: "1",
             }}
           >
-            {uniqBy([...archive], (e) => e).map((cid) => (
+            {uniqBy(archive[receiverAddress] || [], (e) => e).map((cid) => (
               <MessageFromPath
                 key={cid}
                 path={cid}
@@ -183,7 +232,7 @@ const Home: NextPage = () => {
                 address={address}
               />
             ))}
-            {uniqBy(inbox, "msg.id").map(({ msg }) => (
+            {uniqBy(inbox[receiverAddress], "msg.id").map(({ msg }) => (
               <Message
                 key={msg.id}
                 msg={msg}
