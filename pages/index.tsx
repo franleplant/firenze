@@ -12,6 +12,7 @@ import { IMessage, useSaveMessage } from "dal/message";
 import { IMessageArchive, useArchive, useSaveArchive } from "dal/archive";
 import { useMailbox, useSaveToMailbox } from "dal/mailbox";
 import Composer from "components/Composer";
+import NewConversation from "components/NewConversation";
 
 //
 // TODO
@@ -147,6 +148,10 @@ const Home: NextPage = () => {
       throw new Error(`we fucked up`);
     }
 
+    // TODO sign and encrypt and change the structure of the mailbox
+    // msg = sign(encrypt(payload))
+    // pushToMailBox(threadId, msg)
+
     const msg: IMessage = {
       id: uuid(),
       from: address,
@@ -182,6 +187,12 @@ const Home: NextPage = () => {
     <div className="page-container">
       <div className="container">
         <div className="contacts__container">
+          <div className="contact__item" style={{ background: "grey" }}>
+            <NewConversation
+              onNew={(newThreadId) => setReceiverAddress(newThreadId)}
+            />
+          </div>
+
           {uniqBy(threads, (e) => e.address).map((contact) => (
             <div
               key={contact.address}
@@ -198,17 +209,6 @@ const Home: NextPage = () => {
               <div>{contact.name}</div>
             </div>
           ))}
-          <div className="contact__item">
-            <label>Conversation with</label>
-            <input
-              type="text"
-              value={receiverAddress}
-              onChange={(e) =>
-                setReceiverAddress(e.target.value?.toLowerCase() || "")
-              }
-              style={{ width: "100%" }}
-            />
-          </div>
         </div>
         <div className="messages__container">
           <div
