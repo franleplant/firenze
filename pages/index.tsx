@@ -11,6 +11,7 @@ import { IArchivedMessages, useArchive, useSaveArchive } from "dal/archive";
 import { IMailboxEnvelope, useMailbox, useSaveToMailbox } from "dal/mailbox";
 import Composer from "components/Composer";
 import NewConversation from "components/NewConversation";
+import { useInbox } from "components/Inbox";
 
 //
 // TODO
@@ -52,46 +53,40 @@ const HARDCODED_THREADS: Array<IConversation> = [
   },
 ];
 
-// TODO abstract away
-interface IInbox {
-  [convoId: string]: Array<IMailboxEnvelope>;
-}
-
 const Home: NextPage = () => {
   const { selfID } = useSelfID();
   const { address } = useWallet();
-
-  // This is the inbox, the eventually consistent copy of new messages in the mailbox
-  const [inbox, setInbox] = useState<IInbox>({});
-  const { mutateAsync: saveMessage } = useSaveMessage();
-  const { mutateAsync: SaveToMailbox } = useSaveToMailbox();
 
   const [currentConvoId, setCurrentConvoId] = useState(
     "0x7dCE8a09aE403863dbAf9815DE20E4A7Bb18Ae9D".toLowerCase()
   );
 
+  // archive
   const { data: archive = {}, isLoading } = useArchive();
   const { mutateAsync: saveMessageHistory } = useSaveArchive();
 
+  // mailbox
+  const { mutateAsync: SaveToMailbox } = useSaveToMailbox();
+
+  // ipfs
+  const { mutateAsync: saveMessage } = useSaveMessage();
+
+  // inbox
+  const inbox = useInbox({ archive, convoId: currentConvoId });
+
+  // TODO this can be abstracted inside the mailbox module
   useMailbox(address, async (messages) => {
     if (!selfID) {
       console.log("No selfid");
       return;
     }
-    const envelopes = await Promise.all(
-      messages.map(async (envelope) => {
-        setInbox((inbox) => {
-          const oldConvo = inbox[envelope.msg.convoId] || [];
-          // TODO we need to use immer or somethign like that to make this update easier to read
-          return {
-            ...inbox,
-            [envelope.msg.convoId]: [envelope, ...oldConvo],
-          };
-        });
-        return envelope;
-      })
-    );
 
+    const envelopes = messages.map((envelope) => {
+      inbox.push(envelope);
+      return envelope;
+    });
+
+    // TODO abstract away
     const archivePatch = {} as IArchivedMessages;
     envelopes.forEach(({ msg }) => {
       const old = archivePatch[msg.convoId] || [];
@@ -103,30 +98,6 @@ const Home: NextPage = () => {
 
     await saveMessageHistory(archivePatch);
   });
-
-  // remove already archived messages from the inbox and also pop them out of the mailbox
-  // TODO abstract into an inbox module
-  useEffect(() => {
-    // TODO this is super inefficient, make it better
-    const isArchived = (url: MsgURL): boolean => {
-      return archive[currentConvoId].map(({ url }) => url).includes(url);
-    };
-
-    setInbox((inbox) => {
-      const convo = inbox[currentConvoId] || [];
-      convo.forEach(({ msg, pop }) => {
-        if (isArchived(msg.msgURL)) {
-          pop();
-        }
-      });
-      return {
-        ...inbox,
-        [currentConvoId]: convo.filter(({ msg, pop }) =>
-          isArchived(msg.msgURL)
-        ),
-      };
-    });
-  }, [archive]);
 
   async function onSend(newMsg: string) {
     if (!address) {
@@ -194,7 +165,7 @@ const Home: NextPage = () => {
       convoId: currentConvoId,
       isArchived: true,
     })),
-    ...inbox[currentConvoId].map((envelope) => ({
+    ...inbox.messages[currentConvoId].map((envelope) => ({
       msgUrl: envelope.msg.msgURL,
       timestamp: envelope.msg.timestamp,
       convoId: currentConvoId,
