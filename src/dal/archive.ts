@@ -11,13 +11,15 @@ import {
   UseQueryResult,
   useQueryClient,
 } from "react-query";
+import { MsgURL } from "./message";
 
-// TODO eventually this will be something like
-// ipfs://{hash} ethereum://{transaction/contract}
-export type MessageId = string;
+export interface IMessageArchiveElement {
+  url: MsgURL;
+  timestamp: string;
+}
 
 export interface IMessageArchive {
-  [pubKey: string]: Array<MessageId>;
+  [pubKey: string]: Array<IMessageArchiveElement>;
 }
 
 export function useArchive(): UseQueryResult<IMessageArchive> {
@@ -35,9 +37,12 @@ export function useArchive(): UseQueryResult<IMessageArchive> {
 
       return {
         "0x7dce8a09ae403863dbaf9815de20e4a7bb18ae9d": [
-          "bagcqcerammm4rci4jsrk2zs5xm5b4h6girwjv24xkpc3r5hqkpvxxqza42sq",
+          {
+            url: "ipfs://bagcqcerammm4rci4jsrk2zs5xm5b4h6girwjv24xkpc3r5hqkpvxxqza42sq",
+            timestamp: new Date().toISOString(),
+          },
         ],
-      };
+      } as IMessageArchive;
 
       //const profile = await selfID.get("basicProfile");
       //return profile?.["firenze.messages"] || {};

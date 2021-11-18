@@ -1,19 +1,16 @@
 import type { NextPage } from "next";
-import invariant from "ts-invariant";
 import uniqBy from "lodash.uniqby";
 import { useEffect, useState } from "react";
 import { v4 as uuid } from "uuid";
 
 import { useSelfID } from "components/SelfID";
 import { useWallet } from "components/Wallet";
-import Message from "components/Message";
 import MessageFromPath from "components/MessageFromPath";
 import { IMessage, MsgURL, useSaveMessage } from "dal/message";
 import { IMessageArchive, useArchive, useSaveArchive } from "dal/archive";
 import { IMailboxEnvelope, useMailbox, useSaveToMailbox } from "dal/mailbox";
 import Composer from "components/Composer";
 import NewConversation from "components/NewConversation";
-import { useIpfs } from "components/IPFS";
 
 //
 // TODO
@@ -33,14 +30,14 @@ interface Window {
   ethereum: any;
 }
 
-export interface IMsgThread {
+export interface IConversation {
   // pubkey
   address: string;
   // TODO this is a super place holder
   name?: string;
 }
 
-const HARDCODED_THREADS: Array<IMsgThread> = [
+const HARDCODED_THREADS: Array<IConversation> = [
   {
     address: "0x6f98518890604Aa8aC740E66806bCa93613E3CDe".toLowerCase(),
     name: "lucas",
@@ -63,14 +60,12 @@ interface IInbox {
 const Home: NextPage = () => {
   const { selfID } = useSelfID();
   const { address } = useWallet();
-  const { ipfs } = useIpfs();
 
   // This is the inbox, the eventually consistent copy of new messages in the mailbox
   const [inbox, setInbox] = useState<IInbox>({});
   const { mutateAsync: saveMessage } = useSaveMessage();
   const { mutateAsync: SaveToMailbox } = useSaveToMailbox();
 
-  // TODO call this "conversationWith" or something better
   const [currentConvoId, setCurrentConvoId] = useState(
     "0x7dCE8a09aE403863dbAf9815DE20E4A7Bb18Ae9D".toLowerCase()
   );
@@ -100,8 +95,10 @@ const Home: NextPage = () => {
     const archivePatch = {} as IMessageArchive;
     envelopes.forEach(({ msg }) => {
       const old = archivePatch[msg.convoId] || [];
-      // TODO add timestamp
-      archivePatch[msg.convoId] = [msg.msgURL, ...old];
+      archivePatch[msg.convoId] = [
+        { url: msg.msgURL, timestamp: msg.timestamp },
+        ...old,
+      ];
     });
 
     await saveMessageHistory(archivePatch);
@@ -112,7 +109,7 @@ const Home: NextPage = () => {
   useEffect(() => {
     // TODO this is super inefficient, make it better
     const isArchived = (url: MsgURL): boolean => {
-      return archive[currentConvoId].includes(url);
+      return archive[currentConvoId].map(({ url }) => url).includes(url);
     };
 
     setInbox((inbox) => {
@@ -130,30 +127,6 @@ const Home: NextPage = () => {
       };
     });
   }, [archive]);
-
-  //function onMessageLoad(msg: IMessage) {
-  //setInbox((inbox) => {
-  //const byId = (other: IInboxMessage) => msg.id === other.msg.id;
-
-  //// TODO explain this shit.
-  //// TLDR: since all messages are stored in the mailbox (the ones we receive and the ones we send),
-  //// we need to disambugiate
-  //const convoId = msg.from === address ? msg.to : msg.from;
-
-  //const oldThreadMessages = inbox[convoId] || [];
-  //const msgAlreadyInCeramic = oldThreadMessages.find(byId);
-  //if (!msgAlreadyInCeramic) {
-  //return inbox;
-  //}
-
-  //msgAlreadyInCeramic.pop();
-
-  //return {
-  //...inbox,
-  //[convoId]: oldThreadMessages.filter((other) => !byId(other)),
-  //};
-  //});
-  //}
 
   async function onSend(newMsg: string) {
     if (!address) {
@@ -201,7 +174,7 @@ const Home: NextPage = () => {
     address: pubKey.toLowerCase(),
   });
 
-  const threads: Array<IMsgThread> = [
+  const threads: Array<IConversation> = [
     ...HARDCODED_THREADS,
     ...Object.keys(archive).map(toThread),
     ...Object.keys(inbox).map(toThread),
@@ -215,11 +188,9 @@ const Home: NextPage = () => {
   }
 
   const messages: Array<IMessageUI> = [
-    // TODO proper date
-    ...archive[currentConvoId].map((msgUrl) => ({
-      // TODO archive type
-      msgUrl,
-      timestamp: new Date("2021-11-1"),
+    ...archive[currentConvoId].map((archivedMsg) => ({
+      msgUrl: archivedMsg.url,
+      timestamp: archivedMsg.timestamp,
       convoId: currentConvoId,
       isArchived: true,
     })),
