@@ -14,7 +14,6 @@ export interface IProps {
 
 export function IPFSProvider(props: IProps) {
   const [ipfs, setIpfs] = useState<IPFS | undefined>();
-  console.log("dagJose", dagJose);
   useEffect(() => {
     async function effect() {
       // source https://blog.ceramic.network/how-to-store-signed-and-encrypted-data-on-ipfs/

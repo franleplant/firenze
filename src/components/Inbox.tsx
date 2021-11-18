@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import useDeepCompareEffect from "use-deep-compare-effect";
 
 import { IMailboxEnvelope } from "dal/mailbox";
 import { MsgURL } from "dal/message";
@@ -35,35 +36,39 @@ export function useInbox({ archive, convoId }: IInboxArgs): IInbox {
     });
   }
 
+  const currentConvoInbox = inbox[convoId] || [];
+  const currentConvoArchive = archive[convoId] || [];
+
   // remove already archived messages from the inbox and also pop them out of the mailbox
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     //if(true) {return}
     // If the inbox is emtpy for that conversation then simply skip this hook
     // if the archive is empty do also the same
-    if (!inbox[convoId]?.length || !archive[convoId]?.length) {
+    if (currentConvoInbox.length === 0 || currentConvoArchive.length === 0) {
       return;
     }
 
-    console.log("inbox effect", inbox[convoId], archive, archive[convoId]);
+    console.log("inbox effect", currentConvoInbox, currentConvoArchive);
 
     // TODO this is super inefficient, make it better
     const isArchived = (targetUrl: MsgURL): boolean => {
-      return (archive[convoId] || []).map(({ url }) => url).includes(targetUrl);
+      return currentConvoArchive.map(({ url }) => url).includes(targetUrl);
     };
 
     setInbox((inbox) => {
-      const convo = inbox[convoId] || [];
-      convo.forEach(({ msg, pop }) => {
+      currentConvoInbox.forEach(({ msg, pop }) => {
         if (isArchived(msg.msgURL)) {
           pop();
         }
       });
       return {
         ...inbox,
-        [convoId]: convo.filter(({ msg, pop }) => !isArchived(msg.msgURL)),
+        [convoId]: currentConvoInbox.filter(
+          ({ msg }) => !isArchived(msg.msgURL)
+        ),
       };
     });
-  }, [inbox, archive, convoId]);
+  }, [currentConvoInbox, currentConvoArchive, convoId]);
 
   return {
     messages: inbox,
