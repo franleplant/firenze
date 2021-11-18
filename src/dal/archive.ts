@@ -29,8 +29,18 @@ export function useArchive(): UseQueryResult<IMessageArchive> {
       if (!selfID) {
         return;
       }
-      const profile = await selfID.get("basicProfile");
-      return profile?.["firenze.messages"] || {};
+      // TODO this should be not needed in the long run,
+      // uncomment to remove all messages
+      //await selfID.set("basicProfile", { ["firenze.messages"]: {}, });
+
+      return {
+        "0x7dce8a09ae403863dbaf9815de20e4a7bb18ae9d": [
+          "bagcqcerammm4rci4jsrk2zs5xm5b4h6girwjv24xkpc3r5hqkpvxxqza42sq",
+        ],
+      };
+
+      //const profile = await selfID.get("basicProfile");
+      //return profile?.["firenze.messages"] || {};
     },
   });
 }

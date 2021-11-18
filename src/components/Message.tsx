@@ -2,6 +2,7 @@ import { IMessage } from "dal/message";
 
 export interface IProps {
   msg: IMessage | undefined;
+  isArchived?: boolean;
   isLoading?: boolean;
   style?: any;
   address: string;
@@ -17,7 +18,6 @@ export default function Message(props: IProps) {
         maxWidth: "500px",
         background: isFromLocalUser ? "#EEE" : "",
         alignSelf: isFromLocalUser ? "flex-end" : "flex-start",
-        //background: props.msg?.transient ? "grey" : "white",
         ...props.style,
       }}
     >
@@ -27,6 +27,7 @@ export default function Message(props: IProps) {
         <div>
           <div>
             <small>{props.msg?.date}</small>
+            <small>{props.isArchived ? "Archived" : "Archiving"}</small>
           </div>
           <div>{props.msg?.content}</div>
         </div>

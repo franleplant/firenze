@@ -1,9 +1,8 @@
 import { IMessage, useMessage } from "dal/message";
-import Message from "components/Message";
+import Message, { IProps as IMessageProps } from "components/Message";
 
-export interface IProps {
+export interface IProps extends Omit<IMessageProps, "msg"> {
   path: string;
-  address: string;
   onSuccess?: (msg: IMessage) => void;
 }
 

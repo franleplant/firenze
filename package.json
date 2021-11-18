@@ -16,6 +16,8 @@
   "dependencies": {
     "@self.id/web": "^0.1.0",
     "@types/uuid": "^8.3.1",
+    "blockcodec-to-ipld-format": "^2.0.0",
+    "dag-jose": "^1.0.0",
     "firebase": "^9.3.0",
     "ipfs-core": "^0.11.1",
     "lodash.uniqby": "^4.7.0",

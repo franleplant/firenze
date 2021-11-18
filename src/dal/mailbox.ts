@@ -12,33 +12,48 @@ import { useFirebase } from "components/Firebase";
 import { ref, set, onValue, push, remove } from "firebase/database";
 import { useEffect, useRef } from "react";
 import { useMutation, UseMutationResult } from "react-query";
-import { IMessage } from "./message";
+import { MsgURL } from "./message";
+
+export interface IMailboxMsg {
+  convoId: string;
+  msgURL: MsgURL;
+  timestamp: string;
+}
+
+export interface IMailboxEnvelope {
+  msg: IMailboxMsg;
+  pop: () => void;
+}
 
 export function useSaveToMailbox(): UseMutationResult<
   void,
   unknown,
   {
-    msg: IMessage;
-    /** whose inbox? by default it goes to the "to" or recipient */
-    address?: string;
+    // whose mailbox?
+    address: string;
+    // conversation id
+    convoId: string;
+    timestamp: string;
+    msgURL: MsgURL;
   }
 > {
   const { db } = useFirebase();
 
-  return useMutation(async ({ msg, address }) => {
-    const inboxRef = ref(db, `inbox/${address || msg.to}`);
-    const key = push(inboxRef);
-    return set(key, msg);
+  return useMutation(async ({ address, convoId, timestamp, msgURL }) => {
+    const mailboxRef = ref(db, `mailbox/${address}`);
+    const key = push(mailboxRef);
+    return set(key, { msgURL, timestamp, convoId } as IMailboxMsg);
   });
 }
 
-export type OnMessage = (
-  messages: Array<{ pop: () => void; msg: IMessage }>
-) => void;
+export type OnMessage = (messages: Array<IMailboxEnvelope>) => void;
 
-export function useMailbox(address: string | undefined, onMessage: OnMessage) {
+export function useMailbox(
+  address: string | undefined,
+  onMessage: OnMessage
+): void {
   const { db } = useFirebase();
-  const inbox = ref(db, `inbox/${address}`);
+  const mailbox = ref(db, `mailbox/${address}`);
 
   const onMessageRef = useRef(onMessage);
   useEffect(() => {
@@ -49,16 +64,18 @@ export function useMailbox(address: string | undefined, onMessage: OnMessage) {
     if (!address) {
       return;
     }
-    onValue(inbox, async (snapshot) => {
+
+    onValue(mailbox, async (snapshot) => {
       // no data in q
       if (!snapshot.hasChildren()) {
         return;
       }
 
-      const messages: Array<{ pop: () => {}; msg: IMessage }> = [];
+      const messages: Array<IMailboxEnvelope> = [];
+
       snapshot.forEach((child) => {
         // TODO validations
-        const msg = child.val() as IMessage;
+        const msg = child.val() as IMailboxMsg;
 
         const pop = () => remove(child.ref);
 
