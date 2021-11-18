@@ -1,12 +1,13 @@
 import type { NextPage } from "next";
 import uniqBy from "lodash.uniqby";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
+import { useQueryClient } from "react-query";
 
 import { useSelfID } from "components/SelfID";
 import { useWallet } from "components/Wallet";
 import MessageFromPath from "components/MessageFromPath";
-import { IMessage, MsgURL, useSaveMessage } from "dal/message";
+import { IMessage, MsgURL, toMsgURL, useSaveMessage } from "dal/message";
 import { IArchivedMessages, useArchive, useSaveArchive } from "dal/archive";
 import { IMailboxEnvelope, useMailbox, useSaveToMailbox } from "dal/mailbox";
 import Composer from "components/Composer";
@@ -57,9 +58,20 @@ const Home: NextPage = () => {
   const { selfID } = useSelfID();
   const { address } = useWallet();
 
+  const queryClient = useQueryClient();
+
   const [currentConvoId, setCurrentConvoId] = useState(
     "0x7dCE8a09aE403863dbAf9815DE20E4A7Bb18Ae9D".toLowerCase()
   );
+
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  function scrollToLast() {
+    // Scroll to the bottom to reveal last message
+    const element = messagesContainerRef.current;
+    if (element) {
+      element.scrollTop = element.scrollHeight;
+    }
+  }
 
   // archive
   const { data: archive = {}, isLoading } = useArchive();
@@ -109,6 +121,7 @@ const Home: NextPage = () => {
     // path = pushToIpfs(msg)
     // pushToMailBox(convoId, path)
 
+    // TODO store this msg in memory to render it asap
     const msg: IMessage = {
       id: uuid(),
       from: address,
@@ -118,6 +131,9 @@ const Home: NextPage = () => {
     };
 
     const cid = await saveMessage({ msg });
+    const url = toMsgURL(cid.toString(), "ipfs");
+
+    queryClient.setQueryData(`message/${url}`, msg);
 
     // send it to the recipient mailbox
     // and also to the sender mailbox, to be processed and archived
@@ -148,36 +164,39 @@ const Home: NextPage = () => {
   const threads: Array<IConversation> = [
     ...HARDCODED_THREADS,
     ...Object.keys(archive).map(toThread),
-    ...Object.keys(inbox).map(toThread),
+    ...Object.keys(inbox.messages).map(toThread),
   ];
 
   interface IMessageUI {
-    msgUrl: MsgURL;
+    msgURL: MsgURL;
     timestamp: string;
     convoId: string;
     isArchived: boolean;
   }
 
   const messages: Array<IMessageUI> = [
-    ...archive[currentConvoId].map((archivedMsg) => ({
-      msgUrl: archivedMsg.url,
+    ...(archive[currentConvoId] || []).map((archivedMsg) => ({
+      msgURL: archivedMsg.url,
       timestamp: archivedMsg.timestamp,
       convoId: currentConvoId,
       isArchived: true,
     })),
-    ...inbox.messages[currentConvoId].map((envelope) => ({
-      msgUrl: envelope.msg.msgURL,
+    ...(inbox.messages[currentConvoId] || []).map((envelope) => ({
+      msgURL: envelope.msg.msgURL,
       timestamp: envelope.msg.timestamp,
       convoId: currentConvoId,
       isArchived: false,
     })),
   ];
 
-  const sortedMessages = uniqBy(messages, "msgUrl").sort((a, b) => {
+  const sortedMessages = uniqBy(messages, (e) => e.msgURL).sort((a, b) => {
     const dateA = new Date(a.timestamp).valueOf();
     const dateB = new Date(b.timestamp).valueOf();
-    return dateA > dateB ? -1 : 1;
+    return dateA < dateB ? -1 : 1;
   });
+
+  console.log("Inbox messages", inbox.messages);
+  console.log("UI messages", sortedMessages);
 
   return (
     <div className="page-container">
@@ -219,14 +238,16 @@ const Home: NextPage = () => {
               overflowY: "scroll",
               flex: "1",
             }}
+            ref={messagesContainerRef}
           >
             {sortedMessages.map((msg) => (
               <MessageFromPath
-                key={msg.msgUrl}
-                path={msg.msgUrl}
+                key={msg.msgURL}
+                path={msg.msgURL}
                 isArchived={msg.isArchived}
                 // TODO review this prop, it is not understanable
                 address={address}
+                onSuccess={() => scrollToLast()}
               />
             ))}
           </div>

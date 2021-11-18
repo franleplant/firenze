@@ -27,7 +27,7 @@ export default function Message(props: IProps) {
         <div>
           <div>
             <small>{props.msg?.date}</small>
-            <small>{props.isArchived ? "Archived" : "Archiving"}</small>
+            <small>{props.isArchived ? "  Archived" : "  Archiving"}</small>
           </div>
           <div>{props.msg?.content}</div>
         </div>

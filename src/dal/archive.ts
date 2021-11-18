@@ -13,6 +13,8 @@ import {
 } from "react-query";
 import { MsgURL } from "./message";
 
+const TEMP_KEY = "firenze.message.v2";
+
 export interface IArchivedMessage {
   url: MsgURL;
   timestamp: string;
@@ -33,19 +35,22 @@ export function useArchive(): UseQueryResult<IArchivedMessages> {
       }
       // TODO this should be not needed in the long run,
       // uncomment to remove all messages
-      //await selfID.set("basicProfile", { ["firenze.messages"]: {}, });
+      //await selfID.set("basicProfile", { [TEMP_KEY]: {}, });
+      //console.log("clean slated the archive")
 
-      return {
-        "0x7dce8a09ae403863dbaf9815de20e4a7bb18ae9d": [
-          {
-            url: "ipfs://bagcqcerammm4rci4jsrk2zs5xm5b4h6girwjv24xkpc3r5hqkpvxxqza42sq",
-            timestamp: new Date().toISOString(),
-          },
-        ],
-      } as IArchivedMessages;
+      //return {
+      //"0x7dce8a09ae403863dbaf9815de20e4a7bb18ae9d": [
+      //{
+      //url: "ipfs://bagcqcerammm4rci4jsrk2zs5xm5b4h6girwjv24xkpc3r5hqkpvxxqza42sq",
+      //timestamp: new Date().toISOString(),
+      //},
+      //],
+      //} as IArchivedMessages;
 
-      //const profile = await selfID.get("basicProfile");
-      //return profile?.["firenze.messages"] || {};
+      const profile = await selfID.get("basicProfile");
+      const archivedMessages: IArchivedMessages = profile?.[TEMP_KEY] || {};
+      console.log("archive", archivedMessages);
+      return archivedMessages;
     },
   });
 }
@@ -69,12 +74,12 @@ export function useSaveArchive(): UseMutationResult<
       }
 
       const profile = await selfID.get("basicProfile");
-      const archivedMessages = profile?.["firenze.messages"] || {};
+      const archivedMessages: IArchivedMessages = profile?.[TEMP_KEY] || {};
 
-      Object.entries(newMessages).forEach(([threadId, messages]) => {
+      Object.entries(newMessages).forEach(([convoId, messages]) => {
         // TODO this merge logic needs to be much more robust
-        const oldThreadMessages = archivedMessages[threadId] || [];
-        archivedMessages[threadId] = [...messages, ...oldThreadMessages];
+        const oldConvo = archivedMessages[convoId] || [];
+        archivedMessages[convoId] = [...messages, ...oldConvo];
       });
 
       await selfID.set("basicProfile", {
@@ -91,7 +96,7 @@ export function useSaveArchive(): UseMutationResult<
         //
         // Also, it would be nice to segment messages by conversations or threads, i.e. conversationWith: [pubKey: string]: ListOfMessages
         //
-        ["firenze.messages"]: archivedMessages,
+        [TEMP_KEY]: archivedMessages,
       });
 
       return archivedMessages;

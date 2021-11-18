@@ -37,9 +37,18 @@ export function useInbox({ archive, convoId }: IInboxArgs): IInbox {
 
   // remove already archived messages from the inbox and also pop them out of the mailbox
   useEffect(() => {
+    //if(true) {return}
+    // If the inbox is emtpy for that conversation then simply skip this hook
+    // if the archive is empty do also the same
+    if (!inbox[convoId]?.length || !archive[convoId]?.length) {
+      return;
+    }
+
+    console.log("inbox effect", inbox[convoId], archive, archive[convoId]);
+
     // TODO this is super inefficient, make it better
-    const isArchived = (url: MsgURL): boolean => {
-      return archive[convoId].map(({ url }) => url).includes(url);
+    const isArchived = (targetUrl: MsgURL): boolean => {
+      return (archive[convoId] || []).map(({ url }) => url).includes(targetUrl);
     };
 
     setInbox((inbox) => {
@@ -51,10 +60,10 @@ export function useInbox({ archive, convoId }: IInboxArgs): IInbox {
       });
       return {
         ...inbox,
-        [convoId]: convo.filter(({ msg, pop }) => isArchived(msg.msgURL)),
+        [convoId]: convo.filter(({ msg, pop }) => !isArchived(msg.msgURL)),
       };
     });
-  }, [archive, convoId]);
+  }, [inbox, archive, convoId]);
 
   return {
     messages: inbox,

@@ -17,13 +17,16 @@ import type { CID as CIDType } from "ipfs-core/src/block-storage";
 // Eventually this will support more protocols like ethereum
 export type MsgURL = `ipfs://${string}`;
 
-// TODO use
 export function getIpfsPath(url: MsgURL): string {
   const [protocol, id] = url.split("://");
   invariant(protocol === "ipfs", "protocol should be ipfs");
   invariant(id, "empty id");
 
   return id;
+}
+
+export function toMsgURL(id: string, storage: "ipfs" = "ipfs"): MsgURL {
+  return `${storage}://${id}`;
 }
 
 export interface IMessage {
@@ -38,14 +41,15 @@ export interface IMessage {
 }
 
 export function useMessage(
-  path: string,
+  url: MsgURL,
   options?: UseQueryOptions<any, unknown, IMessage>
 ): UseQueryResult<IMessage> {
   const { ipfs } = useIpfs();
   const { selfID } = useSelfID();
+  const path = getIpfsPath(url);
 
   return useQuery({
-    queryKey: `message/${path}`,
+    queryKey: `message/${url}`,
     enabled: !!ipfs,
     queryFn: async () => {
       if (!ipfs) {
