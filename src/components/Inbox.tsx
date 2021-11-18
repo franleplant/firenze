@@ -1,7 +1,8 @@
+import { useEffect, useState } from "react";
+
 import { IMailboxEnvelope } from "dal/mailbox";
 import { MsgURL } from "dal/message";
 import { IArchivedMessages } from "dal/archive";
-import { useEffect, useState } from "react";
 
 // TODO abstract away
 export interface IInboxMessages {
@@ -34,13 +35,14 @@ export function useInbox({ archive, convoId }: IInboxArgs): IInbox {
     });
   }
 
+
+  // remove already archived messages from the inbox and also pop them out of the mailbox
+  useEffect(() => {
   // TODO this is super inefficient, make it better
   const isArchived = (url: MsgURL): boolean => {
     return archive[convoId].map(({ url }) => url).includes(url);
   };
 
-  // remove already archived messages from the inbox and also pop them out of the mailbox
-  useEffect(() => {
     setInbox((inbox) => {
       const convo = inbox[convoId] || [];
       convo.forEach(({ msg, pop }) => {
