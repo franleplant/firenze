@@ -13,16 +13,16 @@ import {
 } from "react-query";
 import { MsgURL } from "./message";
 
-export interface IMessageArchiveElement {
+export interface IArchivedMessage {
   url: MsgURL;
   timestamp: string;
 }
 
-export interface IMessageArchive {
-  [pubKey: string]: Array<IMessageArchiveElement>;
+export interface IArchivedMessages {
+  [pubKey: string]: Array<IArchivedMessage>;
 }
 
-export function useArchive(): UseQueryResult<IMessageArchive> {
+export function useArchive(): UseQueryResult<IArchivedMessages> {
   const { selfID } = useSelfID();
   return useQuery({
     queryKey: `messageHistory`,
@@ -42,7 +42,7 @@ export function useArchive(): UseQueryResult<IMessageArchive> {
             timestamp: new Date().toISOString(),
           },
         ],
-      } as IMessageArchive;
+      } as IArchivedMessages;
 
       //const profile = await selfID.get("basicProfile");
       //return profile?.["firenze.messages"] || {};
@@ -56,9 +56,9 @@ export function useArchive(): UseQueryResult<IMessageArchive> {
  * to your message list in ceramic
  */
 export function useSaveArchive(): UseMutationResult<
-  IMessageArchive,
+  IArchivedMessages,
   unknown,
-  IMessageArchive
+  IArchivedMessages
 > {
   const queryClient = useQueryClient();
   const { selfID } = useSelfID();
@@ -97,7 +97,7 @@ export function useSaveArchive(): UseMutationResult<
       return archivedMessages;
     },
     {
-      onSuccess: (messages: IMessageArchive) => {
+      onSuccess: (messages: IArchivedMessages) => {
         queryClient.setQueryData(`messageHistory`, messages);
       },
     }

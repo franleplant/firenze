@@ -7,7 +7,7 @@ import { useSelfID } from "components/SelfID";
 import { useWallet } from "components/Wallet";
 import MessageFromPath from "components/MessageFromPath";
 import { IMessage, MsgURL, useSaveMessage } from "dal/message";
-import { IMessageArchive, useArchive, useSaveArchive } from "dal/archive";
+import { IArchivedMessages, useArchive, useSaveArchive } from "dal/archive";
 import { IMailboxEnvelope, useMailbox, useSaveToMailbox } from "dal/mailbox";
 import Composer from "components/Composer";
 import NewConversation from "components/NewConversation";
@@ -92,7 +92,7 @@ const Home: NextPage = () => {
       })
     );
 
-    const archivePatch = {} as IMessageArchive;
+    const archivePatch = {} as IArchivedMessages;
     envelopes.forEach(({ msg }) => {
       const old = archivePatch[msg.convoId] || [];
       archivePatch[msg.convoId] = [
