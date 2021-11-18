@@ -35,13 +35,12 @@ export function useInbox({ archive, convoId }: IInboxArgs): IInbox {
     });
   }
 
-
   // remove already archived messages from the inbox and also pop them out of the mailbox
   useEffect(() => {
-  // TODO this is super inefficient, make it better
-  const isArchived = (url: MsgURL): boolean => {
-    return archive[convoId].map(({ url }) => url).includes(url);
-  };
+    // TODO this is super inefficient, make it better
+    const isArchived = (url: MsgURL): boolean => {
+      return archive[convoId].map(({ url }) => url).includes(url);
+    };
 
     setInbox((inbox) => {
       const convo = inbox[convoId] || [];
