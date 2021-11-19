@@ -138,15 +138,19 @@ const Home: NextPage = () => {
     // send it to the recipient mailbox
     // and also to the sender mailbox, to be processed and archived
     await Promise.all([
+      // Put in the recipient's mailbox address,
+      // with the convoId if the sender
       SaveToMailbox({
         address: msg.to,
-        convoId: currentConvoId,
+        convoId: msg.from,
         timestamp: msg.date,
         msgURL: `ipfs://${cid.toString()}`,
       }),
+      // Put in the sender's mailbox address,
+      // with the convoId of the recipient
       SaveToMailbox({
         address: msg.from,
-        convoId: currentConvoId,
+        convoId: msg.to,
         timestamp: msg.date,
         msgURL: `ipfs://${cid.toString()}`,
       }),

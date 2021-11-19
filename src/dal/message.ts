@@ -104,15 +104,15 @@ export async function sign(
   ipfs: IPFS,
   did: DID
 ): Promise<CIDType> {
-  const { jws, linkedBlock } = await did!.createDagJWS(payload);
+  const { jws, linkedBlock } = await did.createDagJWS(payload);
   // put the JWS into the ipfs dag
-  const jwsCid = await ipfs!.dag.put(jws, {
+  const jwsCid = await ipfs.dag.put(jws, {
     format: "dag-jose",
     hashAlg: "sha2-256",
   });
 
   // put the payload into the ipfs dag
-  const a = await ipfs!.block.put(linkedBlock, { cid: jws.link } as any);
+  const a = await ipfs.block.put(linkedBlock, { cid: jws.link } as any);
   //console.log("sign block", a)
 
   return jwsCid;
@@ -125,8 +125,9 @@ export async function getSigned(
 ): Promise<unknown> {
   const jws = await ipfs.dag.get(cid);
   // TODO verify the signind did
-  await did.verifyJWS(jws.value);
+  const signer = await did.verifyJWS(jws.value);
 
+  // TODO verify shape through json schemas
   const payload = await ipfs.dag.get(jws.value.link);
   return payload.value;
 }

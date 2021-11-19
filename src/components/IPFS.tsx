@@ -1,5 +1,6 @@
 import { useEffect, useState, createContext, useContext } from "react";
-import { create, IPFS } from "ipfs-core";
+import { IPFS } from "ipfs-core";
+import { create } from "ipfs-http-client";
 import * as dagJose from "dag-jose";
 
 export interface IContext {
@@ -17,7 +18,14 @@ export function IPFSProvider(props: IProps) {
   useEffect(() => {
     async function effect() {
       // source https://blog.ceramic.network/how-to-store-signed-and-encrypted-data-on-ipfs/
-      const ipfs = await create({ ipld: { codecs: [dagJose] } });
+      const ipfs = create({
+        // TODO proper config module
+        url: process.env.NEXT_PUBLIC_IPFS_GATEWAY,
+        ipld: { codecs: [dagJose] },
+      });
+
+      //ipfs.pin.remote.add
+
       // TODO remove
       (window as any).ipfs = ipfs;
       setIpfs(ipfs);
