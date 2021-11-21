@@ -1,4 +1,4 @@
-import { useIpfs } from "components/IPFS";
+import { useIpfs, IContext } from "components/IPFS";
 import { useSelfID } from "components/SelfID";
 import { IPFS, CID } from "ipfs-core";
 // TODO get the CID from multiformats
@@ -79,12 +79,15 @@ export function useSaveMessage(): UseMutationResult<
   unknown,
   { msg: IMessage }
 > {
-  const { ipfs } = useIpfs();
+  const { ipfs, web3 } = useIpfs();
   const { selfID } = useSelfID();
 
   return useMutation(async ({ msg }) => {
     if (!ipfs) {
       throw new Error(`invalid ipfs instance`);
+    }
+    if (!web3) {
+      throw new Error(`invalid web3 instance`);
     }
     if (!selfID) {
       throw new Error(`invalid selfID instance`);
@@ -94,7 +97,7 @@ export function useSaveMessage(): UseMutationResult<
       throw new Error(`invalid did`);
     }
 
-    const cid = await sign(msg, ipfs, did);
+    const cid = await sign(msg, web3, did);
     return cid;
   });
 }
@@ -102,7 +105,7 @@ export function useSaveMessage(): UseMutationResult<
 // TODO unit test
 export async function sign(
   payload: Record<string, any>,
-  ipfs: IPFS,
+  web3: IContext["web3"],
   did: DID
 ): Promise<CIDType> {
   const jws = await did.createJWS(payload);
@@ -112,18 +115,26 @@ export async function sign(
   // c) it lacks transparent compatibility with other storage mechanisms such as on-chain
   delete jws.link;
 
-  const { cid } = await ipfs.add(new TextEncoder().encode(JSON.stringify(jws)));
+  const cid = await web3?.put([jsonToFile(jws)], {
+    wrapWithDirectory: false,
+  });
+  //const res = await web3?.get(rootCid!); // Web3Response
+  //const files = await res?.files(); // Web3File[]
+  //const uploadedFile = files?.[0];
 
-  return cid;
+  // TODO error handling
+
+  //return CID.parse(uploadedFile!.cid);
+  return CID.parse(cid!);
 }
 
 export async function getSigned(
   cid: CIDType,
-  ipfs: IPFS,
+  ipfs: IContext["ipfs"],
   did: DID
 ): Promise<unknown> {
   let chunks: Array<number> = [];
-  for await (const buf of ipfs.cat(cid)) {
+  for await (const buf of ipfs!.cat(cid)) {
     chunks = [...chunks, ...(buf as any)];
   }
   const buffer = new Uint8Array(chunks);
@@ -140,4 +151,13 @@ export async function getSigned(
   //res.didResolutionResult.didDocument.
   console.log("res", res);
   return payload;
+}
+
+function jsonToFile(json: Record<string, any>): File {
+  // You can create File objects from a Blob of binary data
+  // see: https://developer.mozilla.org/en-US/docs/Web/API/Blob
+  // Here we're just storing a JSON object, but you can store images,
+  // audio, or whatever you want!
+  const blob = new Blob([JSON.stringify(json)], { type: "application/json" });
+  return new File([blob], "TODO_randomnames.json");
 }
