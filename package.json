@@ -14,11 +14,13 @@
     "prepare": "husky install"
   },
   "dependencies": {
+    "@pinata/sdk": "^1.1.23",
     "@self.id/web": "^0.1.0",
     "@types/uuid": "^8.3.1",
     "blockcodec-to-ipld-format": "^2.0.0",
     "dag-jose": "^1.0.0",
     "firebase": "^9.3.0",
+    "fs": "^0.0.1-security",
     "ipfs-core": "^0.11.1",
     "ipfs-http-client": "^54.0.0",
     "lodash.uniqby": "^4.7.0",

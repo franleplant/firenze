@@ -11,7 +11,7 @@ export default function Composer(props: IProps) {
     <form
       onSubmit={async (e) => {
         e.preventDefault();
-        setNewMsg("")
+        setNewMsg("");
         props.onSend(newMsg);
       }}
     >

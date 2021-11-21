@@ -13,7 +13,7 @@ import {
 } from "react-query";
 import { MsgURL } from "./message";
 
-const TEMP_KEY = "firenze.message.v2";
+const TEMP_KEY = "firenze.message.v3";
 
 export interface IArchivedMessage {
   url: MsgURL;

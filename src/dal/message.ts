@@ -99,23 +99,22 @@ export function useSaveMessage(): UseMutationResult<
   });
 }
 
+// TODO unit test
 export async function sign(
   payload: Record<string, any>,
   ipfs: IPFS,
   did: DID
 ): Promise<CIDType> {
-  const { jws, linkedBlock } = await did.createDagJWS(payload);
-  // put the JWS into the ipfs dag
-  const jwsCid = await ipfs.dag.put(jws, {
-    format: "dag-jose",
-    hashAlg: "sha2-256",
-  });
+  const jws = await did.createJWS(payload);
+  // we are actually not using the DAG part of the jws
+  // because a) we don't really care about, the jws is self contained,
+  // b) it requires special plugins out of ipfs making the deployment harder
+  // c) it lacks transparent compatibility with other storage mechanisms such as on-chain
+  delete jws.link;
 
-  // put the payload into the ipfs dag
-  const a = await ipfs.block.put(linkedBlock, { cid: jws.link } as any);
-  //console.log("sign block", a)
+  const { cid } = await ipfs.add(new TextEncoder().encode(JSON.stringify(jws)));
 
-  return jwsCid;
+  return cid;
 }
 
 export async function getSigned(
@@ -123,11 +122,22 @@ export async function getSigned(
   ipfs: IPFS,
   did: DID
 ): Promise<unknown> {
-  const jws = await ipfs.dag.get(cid);
-  // TODO verify the signind did
-  const signer = await did.verifyJWS(jws.value);
+  let chunks: Array<number> = [];
+  for await (const buf of ipfs.cat(cid)) {
+    chunks = [...chunks, ...(buf as any)];
+  }
+  const buffer = new Uint8Array(chunks);
+  const jwsString = new TextDecoder().decode(buffer);
+  const jws = JSON.parse(jwsString);
 
-  // TODO verify shape through json schemas
-  const payload = await ipfs.dag.get(jws.value.link);
-  return payload.value;
+  //debugger
+  // TODO validate the shape
+  //        // TODO handle errors
+  //const payload =  JSON.parse(jws);
+
+  const res = await did.verifyJWS(jws);
+  const payload = res.payload;
+  //res.didResolutionResult.didDocument.
+  console.log("res", res);
+  return payload;
 }
