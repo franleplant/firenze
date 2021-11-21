@@ -72,9 +72,6 @@ export function useMessage(
   });
 }
 
-// TODO maybe this should be called send message or something like this,
-// this represents the creation of a message signed by the active user and
-// store it in ipfs
 export function useSaveMessage(): UseMutationResult<
   CIDType,
   unknown,
@@ -158,7 +155,7 @@ export async function get(
 
   // TODO maybe add an extra field so that we can show this in the UI?
   // TODO make this feature flagable for testing
-  if (isTrusted) {
+  if (!isTrusted) {
     throw new Error("Corrupted message: it was signed not by the author");
   }
 
