@@ -3,17 +3,14 @@ import { IPFS } from "ipfs-core";
 import { create } from "ipfs-http-client";
 import { Web3Storage } from "web3.storage";
 //import * as dagJose from "dag-jose";
-import pinataSDK, { PinataClient } from "@pinata/sdk";
 
 export interface IContext {
   ipfs: IPFS | undefined;
-  pinata: PinataClient | undefined;
   web3: Web3Storage | undefined;
 }
 
 export const Context = createContext<IContext>({
   ipfs: undefined,
-  pinata: undefined,
   web3: undefined,
 });
 
@@ -23,7 +20,6 @@ export interface IProps {
 
 export function IPFSProvider(props: IProps) {
   const [ipfs, setIpfs] = useState<IPFS | undefined>();
-  const [pinata, setPinata] = useState<PinataClient | undefined>();
   const [web3, setWeb3] = useState<Web3Storage | undefined>();
   useEffect(() => {
     async function effect() {
@@ -47,10 +43,6 @@ export function IPFSProvider(props: IProps) {
         token: process.env.NEXT_PUBLIC_WEB3_STORAGE!,
       });
       setWeb3(client);
-
-      //const pinata = pinataSDK(process.env.NEXT_PUBLIC_PINATA_APIKEY!, process.env.NEXT_PUBLIC_PINATA_SECRET!);
-
-      //setPinata(pinata)
     }
 
     effect();
@@ -60,7 +52,6 @@ export function IPFSProvider(props: IProps) {
     <Context.Provider
       value={{
         ipfs,
-        pinata,
         web3,
       }}
     >

@@ -14,6 +14,7 @@
     "prepare": "husky install"
   },
   "dependencies": {
+    "@ceramicnetwork/stream-caip10-link": "^1.2.2",
     "@pinata/sdk": "^1.1.23",
     "@self.id/web": "^0.1.0",
     "@types/uuid": "^8.3.1",

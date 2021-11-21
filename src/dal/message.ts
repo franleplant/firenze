@@ -1,3 +1,4 @@
+import { Caip10Link } from '@ceramicnetwork/stream-caip10-link'
 import { useIpfs, IContext } from "components/IPFS";
 import { useSelfID } from "components/SelfID";
 import { IPFS, CID } from "ipfs-core";
@@ -33,10 +34,7 @@ export interface IMessage {
   id: string;
   from: string;
   to: string;
-  // TODO posts need to be signed with the receiver's public key
   content: string;
-  // TODO we should also add a signature from the sender to validate that
-  // the sender is effectively the sender
   date: string;
 }
 
@@ -51,6 +49,10 @@ export function useMessage(
   return useQuery({
     queryKey: `message/${url}`,
     enabled: !!ipfs,
+    refetchOnReconnect: false,
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
+    cacheTime: Infinity,
     queryFn: async () => {
       if (!ipfs) {
         throw new Error(`invalid ipfs instance`);
@@ -64,7 +66,7 @@ export function useMessage(
       }
 
       const cid = CID.parse(path);
-      const payload = await getSigned(cid, ipfs, did);
+      const payload = await getSigned(cid, ipfs, did,selfID.client.ceramic);
       return payload;
     },
     ...options,
@@ -105,7 +107,7 @@ export function useSaveMessage(): UseMutationResult<
 // TODO unit test
 export async function sign(
   payload: Record<string, any>,
-  web3: IContext["web3"],
+  web3: NonNullable<IContext["web3"]>,
   did: DID
 ): Promise<CIDType> {
   const jws = await did.createJWS(payload);
@@ -115,40 +117,54 @@ export async function sign(
   // c) it lacks transparent compatibility with other storage mechanisms such as on-chain
   delete jws.link;
 
-  const cid = await web3?.put([jsonToFile(jws)], {
+  const cid = await web3.put([jsonToFile(jws)], {
     wrapWithDirectory: false,
   });
-  //const res = await web3?.get(rootCid!); // Web3Response
-  //const files = await res?.files(); // Web3File[]
-  //const uploadedFile = files?.[0];
 
-  // TODO error handling
+  invariant(cid, "received a bad cid from web3.put")
 
-  //return CID.parse(uploadedFile!.cid);
-  return CID.parse(cid!);
+  return CID.parse(cid);
 }
 
 export async function getSigned(
   cid: CIDType,
-  ipfs: IContext["ipfs"],
-  did: DID
-): Promise<unknown> {
+  ipfs: NonNullable<IContext["ipfs"]>,
+  did: DID,
+  ceramic: any
+): Promise<IMessage> {
   let chunks: Array<number> = [];
-  for await (const buf of ipfs!.cat(cid)) {
+  for await (const buf of ipfs.cat(cid)) {
     chunks = [...chunks, ...(buf as any)];
   }
   const buffer = new Uint8Array(chunks);
   const jwsString = new TextDecoder().decode(buffer);
   const jws = JSON.parse(jwsString);
 
-  //debugger
   // TODO validate the shape
-  //        // TODO handle errors
-  //const payload =  JSON.parse(jws);
+  // TODO handle errors
 
   const res = await did.verifyJWS(jws);
-  const payload = res.payload;
-  //res.didResolutionResult.didDocument.
+  const payload = res.payload as IMessage;
+
+  const authorAddress = payload.from
+  // TODO make this chainId dynamic
+    // TODO support more chains
+  const chainId = 4
+  const accountLink = await Caip10Link.fromAccount(
+      ceramic,
+      `${authorAddress}@eip155:${chainId}`,
+  )
+
+
+  // This has extra query params
+  const signerDid = res.didResolutionResult.didDocument?.id || ""
+  const authorDid = accountLink.did || ""
+
+  // TODO maybe add an extra field so that we can show this in the UI?
+  if (signerDid !== authorDid) {
+    throw new Error('Corrupted message: it was signed not by the author')
+  }
+
   console.log("res", res);
   return payload;
 }
