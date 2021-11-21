@@ -1,5 +1,6 @@
 import { IMessage, MsgURL, useMessage } from "dal/message";
 import Message, { IProps as IMessageProps } from "components/Message";
+import {useEffect} from "react";
 
 export interface IProps extends Omit<IMessageProps, "msg"> {
   path: MsgURL;
@@ -13,6 +14,11 @@ export default function MessageFromPath(props: IProps) {
       props.onSuccess?.(msg);
     },
   });
+
+  useEffect(() => {
+      if (!msg) {return}
+      props.onSuccess?.(msg);
+  }, [msg])
 
   return (
     <Message
