@@ -1,15 +1,14 @@
 import type { NextPage } from "next";
 import uniqBy from "lodash.uniqby";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
-import { useQueryClient } from "react-query";
 
 import { useSelfID } from "components/SelfID";
 import { useWallet } from "components/Wallet";
 import MessageFromPath from "components/MessageFromPath";
-import { IMessage, MsgURL, toMsgURL, useSaveMessage } from "dal/message";
+import { IMessage, MsgURL, useSaveMessage } from "dal/message";
 import { IArchivedMessages, useArchive, useSaveArchive } from "dal/archive";
-import { IMailboxEnvelope, useMailbox, useSaveToMailbox } from "dal/mailbox";
+import { useMailbox, useSaveToMailbox } from "dal/mailbox";
 import Composer from "components/Composer";
 import NewConversation from "components/NewConversation";
 import { useInbox } from "components/Inbox";
@@ -57,8 +56,6 @@ const HARDCODED_THREADS: Array<IConversation> = [
 const Home: NextPage = () => {
   const { selfID } = useSelfID();
   const { address } = useWallet();
-
-  const queryClient = useQueryClient();
 
   const [currentConvoId, setCurrentConvoId] = useState(
     "0x7dCE8a09aE403863dbAf9815DE20E4A7Bb18Ae9D".toLowerCase()
@@ -132,9 +129,6 @@ const Home: NextPage = () => {
     };
 
     const cid = await saveMessage({ msg });
-    const url = toMsgURL(cid.toString(), "ipfs");
-
-    queryClient.setQueryData(`message/${url}`, msg);
 
     // send it to the recipient mailbox
     // and also to the sender mailbox, to be processed and archived

@@ -13,6 +13,7 @@ import {
   useQuery,
   UseQueryResult,
   UseQueryOptions,
+  useQueryClient,
 } from "react-query";
 import invariant from "ts-invariant";
 import type { CID as CIDType } from "ipfs-core/src/block-storage";
@@ -77,18 +78,27 @@ export function useSaveMessage(): UseMutationResult<
   unknown,
   { msg: IMessage }
 > {
+  const queryClient = useQueryClient();
   const { web3 } = useIpfs();
   const { selfID } = useSelfID();
 
-  return useMutation(async ({ msg }) => {
-    invariant(web3);
-    invariant(selfID);
-    const did = selfID.client.ceramic.did;
-    invariant(did);
+  return useMutation(
+    async ({ msg }) => {
+      invariant(web3);
+      invariant(selfID);
+      const did = selfID.client.ceramic.did;
+      invariant(did);
 
-    const cid = await save({ payload: msg }, { web3, did });
-    return cid;
-  });
+      const cid = await save({ payload: msg }, { web3, did });
+      return cid;
+    },
+    {
+      onSuccess: (cid, { msg }) => {
+        const url = toMsgURL(cid.toString(), "ipfs");
+        queryClient.setQueryData(`message/${url}`, msg);
+      },
+    }
+  );
 }
 
 // TODO unit test
