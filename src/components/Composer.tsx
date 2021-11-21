@@ -26,7 +26,9 @@ export default function Composer(props: IProps) {
           marginLeft: "10px",
         }}
       />
-      <button type="submit" disabled={props.isSavingMessage}>{props.isSavingMessage ? 'Sending...' : 'Send'}</button>
+      <button type="submit" disabled={props.isSavingMessage}>
+        {props.isSavingMessage ? "Sending..." : "Send"}
+      </button>
     </form>
   );
 }

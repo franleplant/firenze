@@ -81,7 +81,8 @@ const Home: NextPage = () => {
   const { mutateAsync: SaveToMailbox } = useSaveToMailbox();
 
   // ipfs
-  const { mutateAsync: saveMessage, isLoading: isSavingMessage } = useSaveMessage();
+  const { mutateAsync: saveMessage, isLoading: isSavingMessage } =
+    useSaveMessage();
 
   // inbox
   const inbox = useInbox({ archive, convoId: currentConvoId });
@@ -256,7 +257,7 @@ const Home: NextPage = () => {
             ))}
           </div>
           <div className="messages_composer">
-            <Composer onSend={onSend} isSavingMessage={isSavingMessage}/>
+            <Composer onSend={onSend} isSavingMessage={isSavingMessage} />
           </div>
         </div>
       </div>

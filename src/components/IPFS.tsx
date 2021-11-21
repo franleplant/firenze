@@ -33,7 +33,7 @@ export function IPFSProvider(props: IProps) {
         url: process.env.NEXT_PUBLIC_IPFS_GATEWAY,
         //ipld: { codecs: [dagJose] },
         //headers: {
-          //Authorization: `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
+        //Authorization: `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
         //},
       });
 
