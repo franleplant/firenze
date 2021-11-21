@@ -1,4 +1,6 @@
-import { Caip10Link } from '@ceramicnetwork/stream-caip10-link'
+import { Caip10Link } from "@ceramicnetwork/stream-caip10-link";
+import { CeramicClient } from "@ceramicnetwork/http-client";
+import { PublicID, Core } from "@self.id/core";
 import { useIpfs, IContext } from "components/IPFS";
 import { useSelfID } from "components/SelfID";
 import { IPFS, CID } from "ipfs-core";
@@ -54,19 +56,16 @@ export function useMessage(
     staleTime: Infinity,
     cacheTime: Infinity,
     queryFn: async () => {
-      if (!ipfs) {
-        throw new Error(`invalid ipfs instance`);
-      }
-      if (!selfID) {
-        throw new Error(`invalid selfID instance`);
-      }
+      invariant(ipfs);
+      invariant(selfID);
       const did = selfID.client.ceramic.did;
-      if (!did) {
-        throw new Error(`invalid did`);
-      }
+      invariant(did);
 
       const cid = CID.parse(path);
-      const payload = await getSigned(cid, ipfs, did,selfID.client.ceramic);
+      const payload = await get(
+        { cid },
+        { ipfs, did, ceramic: selfID.client.ceramic }
+      );
       return payload;
     },
     ...options,
@@ -81,91 +80,88 @@ export function useSaveMessage(): UseMutationResult<
   unknown,
   { msg: IMessage }
 > {
-  const { ipfs, web3 } = useIpfs();
+  const { web3 } = useIpfs();
   const { selfID } = useSelfID();
 
   return useMutation(async ({ msg }) => {
-    if (!ipfs) {
-      throw new Error(`invalid ipfs instance`);
-    }
-    if (!web3) {
-      throw new Error(`invalid web3 instance`);
-    }
-    if (!selfID) {
-      throw new Error(`invalid selfID instance`);
-    }
+    invariant(web3);
+    invariant(selfID);
     const did = selfID.client.ceramic.did;
-    if (!did) {
-      throw new Error(`invalid did`);
-    }
+    invariant(did);
 
-    const cid = await sign(msg, web3, did);
+    const cid = await save({ payload: msg }, { web3, did });
     return cid;
   });
 }
 
 // TODO unit test
-export async function sign(
-  payload: Record<string, any>,
-  web3: NonNullable<IContext["web3"]>,
-  did: DID
-): Promise<CIDType> {
-  const jws = await did.createJWS(payload);
+export async function save(
+  params: {
+    payload: IMessage;
+  },
+  deps: {
+    web3: NonNullable<IContext["web3"]>;
+    did: DID;
+  }
+) {
+  const { payload } = params;
+
+  const jws = await deps.did.createJWS(payload);
   // we are actually not using the DAG part of the jws
   // because a) we don't really care about, the jws is self contained,
   // b) it requires special plugins out of ipfs making the deployment harder
   // c) it lacks transparent compatibility with other storage mechanisms such as on-chain
   delete jws.link;
 
-  const cid = await web3.put([jsonToFile(jws)], {
+  const cid = await deps.web3.put([jsonToFile(jws)], {
     wrapWithDirectory: false,
   });
 
-  invariant(cid, "received a bad cid from web3.put")
+  invariant(cid, "received a bad cid from web3.put");
 
   return CID.parse(cid);
 }
 
-export async function getSigned(
-  cid: CIDType,
-  ipfs: NonNullable<IContext["ipfs"]>,
-  did: DID,
-  ceramic: any
-): Promise<IMessage> {
-  let chunks: Array<number> = [];
-  for await (const buf of ipfs.cat(cid)) {
-    chunks = [...chunks, ...(buf as any)];
+export async function get(
+  params: {
+    cid: CIDType;
+  },
+  deps: {
+    ipfs: NonNullable<IContext["ipfs"]>;
+    did: DID;
+    ceramic: CeramicClient;
   }
-  const buffer = new Uint8Array(chunks);
-  const jwsString = new TextDecoder().decode(buffer);
-  const jws = JSON.parse(jwsString);
+) {
+  const { cid } = params;
 
+  const jws = await getJsonFromIpfs(cid, deps.ipfs);
   // TODO validate the shape
   // TODO handle errors
 
-  const res = await did.verifyJWS(jws);
+  const res = await deps.did.verifyJWS(jws);
   const payload = res.payload as IMessage;
 
-  const authorAddress = payload.from
-  // TODO make this chainId dynamic
-    // TODO support more chains
-  const chainId = 4
-  const accountLink = await Caip10Link.fromAccount(
-      ceramic,
-      `${authorAddress}@eip155:${chainId}`,
-  )
+  const signerDid = res.didResolutionResult.didDocument?.id || "";
+  const authorCryptoAccounts = await getCryptoAccounts(signerDid);
 
+  const authorAddress = payload.from;
+  // determine whether the signer of the message is the author or not,
+  // we would expect they are the same and nobody is posing as anybody else,
+  // if it is not trusted then we throw and error
+  //
+  // it has the shape `${authorAddress}@eip155:${chainId}`
+  const isTrusted = Object.keys(authorCryptoAccounts).some((addressLink) =>
+    addressLink.startsWith(authorAddress)
+  );
 
   // This has extra query params
-  const signerDid = res.didResolutionResult.didDocument?.id || ""
-  const authorDid = accountLink.did || ""
 
   // TODO maybe add an extra field so that we can show this in the UI?
-  if (signerDid !== authorDid) {
-    throw new Error('Corrupted message: it was signed not by the author')
+  // TODO make this feature flagable for testing
+  if (isTrusted) {
+    throw new Error("Corrupted message: it was signed not by the author");
   }
 
-  console.log("res", res);
   return payload;
 }
 
@@ -176,4 +172,45 @@ function jsonToFile(json: Record<string, any>): File {
   // audio, or whatever you want!
   const blob = new Blob([JSON.stringify(json)], { type: "application/json" });
   return new File([blob], "TODO_randomnames.json");
+}
+
+export async function getJsonFromIpfs(
+  cid: CIDType,
+  ipfs: NonNullable<IContext["ipfs"]>
+): Promise<any> {
+  let chunks: Array<number> = [];
+  for await (const buf of ipfs.cat(cid)) {
+    chunks = [...chunks, ...(buf as any)];
+  }
+  const buffer = new Uint8Array(chunks);
+  const jwsString = new TextDecoder().decode(buffer);
+  const jws = JSON.parse(jwsString);
+
+  return jws;
+}
+
+/**
+ * Example of return value
+ * {
+ *   "0x19552767c2cd3c00745c7bef792e73d92444235f@eip155:4": "ceramic://k2t6wyse1ukyadyhnzvyufabw604wj0n37sw8ba163ug5m5jf8itxdc2ieync1"
+ * }
+ */
+export async function getCryptoAccounts(
+  did: string
+): Promise<Record<string, string>> {
+  const core = new Core({
+    // TODO env variable
+    ceramic: "testnet-clay",
+  });
+
+  const publicId = new PublicID({ core, id: did });
+
+  const cryptoAccounts = await publicId.get("cryptoAccounts");
+  invariant(cryptoAccounts, "unexpected crypto accounts");
+  return cryptoAccounts;
+  // otherway of getting it
+  //const accountLink = await Caip10Link.fromAccount(
+  //deps.ceramic as any,
+  //`${authorAddress}@eip155:${chainId}`
+  //);
 }
