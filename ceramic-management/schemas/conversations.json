@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Conversations",
+  "type": "object",
+  "additionalProperties": {
+    "name": "convoId",
+    "type": "object",
+    "properties": {
+      "messages" : {
+        "type": "array",
+        "items": {
+          "url": {
+            "type": "string",
+            "description": "IPFS url"
+          },
+          "timestamp": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": []
+}
