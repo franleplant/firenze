@@ -2,16 +2,18 @@ import type { NextPage } from "next";
 import uniqBy from "lodash.uniqby";
 import { useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
+import invariant from "ts-invariant";
 
 import { useSelfID } from "components/SelfID";
 import { useWallet } from "components/Wallet";
 import MessageFromPath from "components/MessageFromPath";
-import { IMessage, MsgURL, useSaveMessage } from "dal/message";
+import { IMessage, MsgURL, toMsgURL, useSaveMessage } from "dal/message";
 import { IArchivedMessages, useArchive, useSaveArchive } from "dal/archive";
 import { useMailbox, useSaveToMailbox } from "dal/mailbox";
 import Composer from "components/Composer";
 import NewConversation from "components/NewConversation";
 import { useInbox } from "components/Inbox";
+import Message from "components/Message";
 
 //
 // TODO
@@ -38,6 +40,14 @@ export interface IConversation {
   name?: string;
 }
 
+export interface IMessageUI {
+  msgURL?: MsgURL;
+  timestamp: string;
+  convoId: string;
+  isArchived?: boolean;
+  preview?: IMessage;
+}
+
 const HARDCODED_THREADS: Array<IConversation> = [
   {
     address: "0x6f98518890604Aa8aC740E66806bCa93613E3CDe".toLowerCase(),
@@ -60,6 +70,8 @@ const Home: NextPage = () => {
   const [currentConvoId, setCurrentConvoId] = useState(
     "0x7dCE8a09aE403863dbAf9815DE20E4A7Bb18Ae9D".toLowerCase()
   );
+
+  const [sendingQueue, setSendingQueue] = useState<Array<IMessageUI>>([]);
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   function scrollToLast() {
@@ -128,7 +140,26 @@ const Home: NextPage = () => {
       content: newMsg,
     };
 
+    setSendingQueue((q) => [
+      ...q,
+      { preview: msg, timestamp: msg.date, convoId: currentConvoId },
+    ]);
+
     const cid = await saveMessage({ msg });
+
+    const msgURL = toMsgURL(cid.toString());
+    setSendingQueue((q) => {
+      return q.map((other) => {
+        if (other.preview?.id !== msg.id) {
+          return other;
+        }
+
+        return {
+          ...other,
+          msgURL,
+        };
+      });
+    });
 
     // send it to the recipient mailbox
     // and also to the sender mailbox, to be processed and archived
@@ -150,6 +181,8 @@ const Home: NextPage = () => {
         msgURL: `ipfs://${cid.toString()}`,
       }),
     ]);
+
+    setSendingQueue((q) => q.filter((other) => other.msgURL !== msgURL));
   }
 
   if (!selfID || !address || (isLoading && Object.keys(archive).length === 0)) {
@@ -166,13 +199,6 @@ const Home: NextPage = () => {
     ...Object.keys(inbox.messages).map(toThread),
   ];
 
-  interface IMessageUI {
-    msgURL: MsgURL;
-    timestamp: string;
-    convoId: string;
-    isArchived: boolean;
-  }
-
   const messages: Array<IMessageUI> = [
     ...(archive[currentConvoId] || []).map((archivedMsg) => ({
       msgURL: archivedMsg.url,
@@ -186,6 +212,7 @@ const Home: NextPage = () => {
       convoId: currentConvoId,
       isArchived: false,
     })),
+    ...sendingQueue,
   ];
 
   const sortedMessages = uniqBy(messages, (e) => e.msgURL).sort((a, b) => {
@@ -239,16 +266,38 @@ const Home: NextPage = () => {
             }}
             ref={messagesContainerRef}
           >
-            {sortedMessages.map((msg) => (
-              <MessageFromPath
-                key={msg.msgURL}
-                path={msg.msgURL}
-                isArchived={msg.isArchived}
-                // TODO review this prop, it is not understanable
-                address={address}
-                onSuccess={() => scrollToLast()}
-              />
-            ))}
+            {sortedMessages.map((msg, index) => {
+              // is still sending
+              if (!msg.msgURL) {
+                invariant(
+                  msg.preview,
+                  "a message without a url should have a preview"
+                );
+                return (
+                  <Message
+                    key={index}
+                    status={"sending"}
+                    timestamp={msg.timestamp}
+                    msg={msg.preview}
+                    // TODO review this prop, it is not understanable
+                    address={address}
+                    onMount={() => scrollToLast()}
+                  />
+                );
+              }
+
+              return (
+                <MessageFromPath
+                  key={index}
+                  msgURL={msg.msgURL}
+                  timestamp={msg.timestamp}
+                  status={msg.isArchived ? "archived" : "archiving"}
+                  // TODO review this prop, it is not understanable
+                  address={address}
+                  onSuccess={() => scrollToLast()}
+                />
+              );
+            })}
           </div>
           <div className="messages_composer">
             <Composer onSend={onSend} isSavingMessage={isSavingMessage} />

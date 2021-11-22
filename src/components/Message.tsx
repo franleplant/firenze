@@ -1,15 +1,27 @@
-import { IMessage } from "dal/message";
+import { useEffect, useRef } from "react";
+
+import { IMessage, MsgURL } from "dal/message";
 
 export interface IProps {
-  msg: IMessage | undefined;
-  isArchived?: boolean;
-  isLoading?: boolean;
+  msg?: IMessage;
   style?: any;
   address: string;
+  status: "sending" | "archiving" | "archived";
+  isLoading?: boolean;
+  timestamp: string;
+  msgURL?: MsgURL;
+  onMount?: () => void;
 }
 
+// TODO styling
 export default function Message(props: IProps) {
   const isFromLocalUser = props.msg?.from === props.address;
+
+  const onMount = useRef(props.onMount);
+  useEffect(() => {
+    onMount?.current?.();
+  }, [onMount]);
+
   return (
     <div
       style={{
@@ -21,17 +33,18 @@ export default function Message(props: IProps) {
         ...props.style,
       }}
     >
-      {props.isLoading ? (
-        "Loading..."
-      ) : (
+      <div>
         <div>
-          <div>
-            <small>{props.msg?.date}</small>
-            <small>{props.isArchived ? "  Archived" : "  Archiving"}</small>
-          </div>
-          <div>{props.msg?.content}</div>
+          <small>{props.timestamp}</small>
+          <small>{` ${props.status}`}</small>
         </div>
-      )}
+        <div>
+          <small>{props.msgURL || ""}</small>
+        </div>
+        <div style={{ marginTop: "20px" }}>
+          {props.isLoading ? "Loading..." : props.msg?.content}
+        </div>
+      </div>
     </div>
   );
 }
