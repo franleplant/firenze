@@ -2,6 +2,7 @@ import { useState } from "react";
 
 export interface IProps {
   onSend: (content: string) => void;
+  isSavingMessage: boolean;
 }
 
 export default function Composer(props: IProps) {
@@ -11,6 +12,7 @@ export default function Composer(props: IProps) {
     <form
       onSubmit={async (e) => {
         e.preventDefault();
+        setNewMsg("");
         props.onSend(newMsg);
       }}
     >
@@ -24,7 +26,9 @@ export default function Composer(props: IProps) {
           marginLeft: "10px",
         }}
       />
-      <button type="submit">Send</button>
+      <button type="submit" disabled={props.isSavingMessage}>
+        {props.isSavingMessage ? "Sending..." : "Send"}
+      </button>
     </form>
   );
 }

@@ -1,18 +1,19 @@
 import type { NextPage } from "next";
-import invariant from "ts-invariant";
 import uniqBy from "lodash.uniqby";
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
+import invariant from "ts-invariant";
 
 import { useSelfID } from "components/SelfID";
 import { useWallet } from "components/Wallet";
-import Message from "components/Message";
 import MessageFromPath from "components/MessageFromPath";
-import { IMessage, useSaveMessage } from "dal/message";
-import { IMessageArchive, useArchive, useSaveArchive } from "dal/archive";
+import { IMessage, MsgURL, toMsgURL, useSaveMessage } from "dal/message";
+import { IArchivedMessages, useArchive, useSaveArchive } from "dal/archive";
 import { useMailbox, useSaveToMailbox } from "dal/mailbox";
 import Composer from "components/Composer";
 import NewConversation from "components/NewConversation";
+import { useInbox } from "components/Inbox";
+import Message from "components/Message";
 
 //
 // TODO
@@ -32,14 +33,22 @@ interface Window {
   ethereum: any;
 }
 
-export interface IMsgThread {
+export interface IConversation {
   // pubkey
   address: string;
   // TODO this is a super place holder
   name?: string;
 }
 
-const HARDCODED_THREADS: Array<IMsgThread> = [
+export interface IMessageUI {
+  msgURL?: MsgURL;
+  timestamp: string;
+  convoId: string;
+  isArchived?: boolean;
+  preview?: IMessage;
+}
+
+const HARDCODED_THREADS: Array<IConversation> = [
   {
     address: "0x6f98518890604Aa8aC740E66806bCa93613E3CDe".toLowerCase(),
     name: "lucas",
@@ -54,94 +63,63 @@ const HARDCODED_THREADS: Array<IMsgThread> = [
   },
 ];
 
-// TODO abstract away
-interface IInboxMessage {
-  msg: IMessage;
-  pop: () => void;
-}
-
-// TODO abstract away
-interface IInbox {
-  [threadId: string]: Array<IInboxMessage>;
-}
-
 const Home: NextPage = () => {
   const { selfID } = useSelfID();
   const { address } = useWallet();
 
-  // This is the inbox, the eventually consistent copy of new messages in the mailbox
-  const [inbox, setInbox] = useState<IInbox>({});
-  const { mutateAsync: saveMessage } = useSaveMessage();
-  const { mutateAsync: SaveToMailbox } = useSaveToMailbox();
-
-  // TODO call this "conversationWith" or something better
-  const [receiverAddress, setReceiverAddress] = useState(
+  const [currentConvoId, setCurrentConvoId] = useState(
     "0x7dCE8a09aE403863dbAf9815DE20E4A7Bb18Ae9D".toLowerCase()
   );
 
+  const [sendingQueue, setSendingQueue] = useState<Array<IMessageUI>>([]);
+
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  function scrollToLast() {
+    // Scroll to the bottom to reveal last message
+    const element = messagesContainerRef.current;
+    if (element) {
+      element.scrollTop = element.scrollHeight;
+    }
+  }
+
+  // archive
   const { data: archive = {}, isLoading } = useArchive();
   const { mutateAsync: saveMessageHistory } = useSaveArchive();
-  //const [messages, setMessages] = useState<Array<IMessage>>([]);
-  //const [transientMessages, setTransientMessages] = useState<Array<IMessage>>( []);
 
+  // mailbox
+  const { mutateAsync: SaveToMailbox } = useSaveToMailbox();
+
+  // ipfs
+  const { mutateAsync: saveMessage, isLoading: isSavingMessage } =
+    useSaveMessage();
+
+  // inbox
+  const inbox = useInbox({ archive, convoId: currentConvoId });
+
+  // TODO this can be abstracted inside the mailbox module
   useMailbox(address, async (messages) => {
     if (!selfID) {
       console.log("No selfid");
       return;
     }
-    const newCids = await Promise.all(
-      messages.map(async ({ msg, pop }) => {
-        // TODO explain this shit.
-        // TLDR: since all messages are stored in the mailbox (the ones we receive and the ones we send),
-        // we need to disambugiate
-        const threadId = msg.from === address ? msg.to : msg.from;
-        setInbox((inbox) => {
-          const oldThreadMessages = inbox[threadId] || [];
-          // TODO we need to use immer or somethign like that to make this update easier to read
-          return { ...inbox, [threadId]: [{ msg, pop }, ...oldThreadMessages] };
-        });
-        // store the msg in ipfs
-        const path = await saveMessage({ msg });
-        // TODO show queed messages and their status
-        return [threadId, path] as [threadId: string, path: string];
-      })
-    );
 
-    const archivePatch = {} as IMessageArchive;
-    newCids.forEach(([threadId, path]) => {
-      const old = archivePatch[threadId] || [];
-      archivePatch[threadId] = [path, ...old];
+    const envelopes = messages.map((envelope) => {
+      inbox.push(envelope);
+      return envelope;
+    });
+
+    // TODO abstract away
+    const archivePatch = {} as IArchivedMessages;
+    envelopes.forEach(({ msg }) => {
+      const old = archivePatch[msg.convoId] || [];
+      archivePatch[msg.convoId] = [
+        { url: msg.msgURL, timestamp: msg.timestamp },
+        ...old,
+      ];
     });
 
     await saveMessageHistory(archivePatch);
-
-    // remove all messages from q
-    //await Promise.all(messages.map(({ pop }) => pop()));
   });
-
-  function onMessageLoad(msg: IMessage) {
-    setInbox((inbox) => {
-      const byId = (other: IInboxMessage) => msg.id === other.msg.id;
-
-      // TODO explain this shit.
-      // TLDR: since all messages are stored in the mailbox (the ones we receive and the ones we send),
-      // we need to disambugiate
-      const threadId = msg.from === address ? msg.to : msg.from;
-
-      const oldThreadMessages = inbox[threadId] || [];
-      const msgAlreadyInCeramic = oldThreadMessages.find(byId);
-      if (!msgAlreadyInCeramic) {
-        return inbox;
-      }
-
-      msgAlreadyInCeramic.pop();
-
-      return {
-        ...inbox,
-        [threadId]: oldThreadMessages.filter((other) => !byId(other)),
-      };
-    });
-  }
 
   async function onSend(newMsg: string) {
     if (!address) {
@@ -150,23 +128,61 @@ const Home: NextPage = () => {
 
     // TODO sign and encrypt and change the structure of the mailbox
     // msg = sign(encrypt(payload))
-    // pushToMailBox(threadId, msg)
+    // path = pushToIpfs(msg)
+    // pushToMailBox(convoId, path)
 
+    // TODO store this msg in memory to render it asap
     const msg: IMessage = {
       id: uuid(),
       from: address,
-      to: receiverAddress as string,
+      to: currentConvoId as string,
       date: new Date().toISOString(),
       content: newMsg,
     };
 
-    // send it to the recipient mailbox
-    // and also to the sender mailbox, to be processed
-    // and archived
-    await Promise.all([
-      SaveToMailbox({ msg, address: msg.to }),
-      SaveToMailbox({ msg, address: msg.from }),
+    setSendingQueue((q) => [
+      ...q,
+      { preview: msg, timestamp: msg.date, convoId: currentConvoId },
     ]);
+
+    const cid = await saveMessage({ msg });
+
+    const msgURL = toMsgURL(cid.toString());
+    setSendingQueue((q) => {
+      return q.map((other) => {
+        if (other.preview?.id !== msg.id) {
+          return other;
+        }
+
+        return {
+          ...other,
+          msgURL,
+        };
+      });
+    });
+
+    // send it to the recipient mailbox
+    // and also to the sender mailbox, to be processed and archived
+    await Promise.all([
+      // Put in the recipient's mailbox address,
+      // with the convoId if the sender
+      SaveToMailbox({
+        address: msg.to,
+        convoId: msg.from,
+        timestamp: msg.date,
+        msgURL: `ipfs://${cid.toString()}`,
+      }),
+      // Put in the sender's mailbox address,
+      // with the convoId of the recipient
+      SaveToMailbox({
+        address: msg.from,
+        convoId: msg.to,
+        timestamp: msg.date,
+        msgURL: `ipfs://${cid.toString()}`,
+      }),
+    ]);
+
+    setSendingQueue((q) => q.filter((other) => other.msgURL !== msgURL));
   }
 
   if (!selfID || !address || (isLoading && Object.keys(archive).length === 0)) {
@@ -177,11 +193,36 @@ const Home: NextPage = () => {
     address: pubKey.toLowerCase(),
   });
 
-  const threads: Array<IMsgThread> = [
+  const threads: Array<IConversation> = [
     ...HARDCODED_THREADS,
     ...Object.keys(archive).map(toThread),
-    ...Object.keys(inbox).map(toThread),
+    ...Object.keys(inbox.messages).map(toThread),
   ];
+
+  const messages: Array<IMessageUI> = [
+    ...(archive[currentConvoId] || []).map((archivedMsg) => ({
+      msgURL: archivedMsg.url,
+      timestamp: archivedMsg.timestamp,
+      convoId: currentConvoId,
+      isArchived: true,
+    })),
+    ...(inbox.messages[currentConvoId] || []).map((envelope) => ({
+      msgURL: envelope.msg.msgURL,
+      timestamp: envelope.msg.timestamp,
+      convoId: currentConvoId,
+      isArchived: false,
+    })),
+    ...sendingQueue,
+  ];
+
+  const sortedMessages = uniqBy(messages, (e) => e.msgURL).sort((a, b) => {
+    const dateA = new Date(a.timestamp).valueOf();
+    const dateB = new Date(b.timestamp).valueOf();
+    return dateA < dateB ? -1 : 1;
+  });
+
+  //console.log("Inbox messages", inbox.messages);
+  //console.log("UI messages", sortedMessages);
 
   return (
     <div className="page-container">
@@ -189,7 +230,7 @@ const Home: NextPage = () => {
         <div className="contacts__container">
           <div className="contact__item" style={{ background: "grey" }}>
             <NewConversation
-              onNew={(newThreadId) => setReceiverAddress(newThreadId)}
+              onNew={(newThreadId) => setCurrentConvoId(newThreadId)}
             />
           </div>
 
@@ -198,11 +239,11 @@ const Home: NextPage = () => {
               key={contact.address}
               className="contact__item"
               onClick={() => {
-                setReceiverAddress(contact.address);
+                setCurrentConvoId(contact.address);
               }}
               style={{
                 background:
-                  contact.address === receiverAddress ? "grey" : "white",
+                  contact.address === currentConvoId ? "grey" : "white",
               }}
             >
               <div>{contact.address}</div>
@@ -223,26 +264,43 @@ const Home: NextPage = () => {
               overflowY: "scroll",
               flex: "1",
             }}
+            ref={messagesContainerRef}
           >
-            {uniqBy(archive[receiverAddress] || [], (e) => e).map((cid) => (
-              <MessageFromPath
-                key={cid}
-                path={cid}
-                onSuccess={onMessageLoad}
-                address={address}
-              />
-            ))}
-            {uniqBy(inbox[receiverAddress], "msg.id").map(({ msg }) => (
-              <Message
-                key={msg.id}
-                msg={msg}
-                style={{ background: "grey" }}
-                address={address}
-              />
-            ))}
+            {sortedMessages.map((msg, index) => {
+              // is still sending
+              if (!msg.msgURL) {
+                invariant(
+                  msg.preview,
+                  "a message without a url should have a preview"
+                );
+                return (
+                  <Message
+                    key={index}
+                    status={"sending"}
+                    timestamp={msg.timestamp}
+                    msg={msg.preview}
+                    // TODO review this prop, it is not understanable
+                    address={address}
+                    onMount={() => scrollToLast()}
+                  />
+                );
+              }
+
+              return (
+                <MessageFromPath
+                  key={index}
+                  msgURL={msg.msgURL}
+                  timestamp={msg.timestamp}
+                  status={msg.isArchived ? "archived" : "archiving"}
+                  // TODO review this prop, it is not understanable
+                  address={address}
+                  onSuccess={() => scrollToLast()}
+                />
+              );
+            })}
           </div>
           <div className="messages_composer">
-            <Composer onSend={onSend} />
+            <Composer onSend={onSend} isSavingMessage={isSavingMessage} />
           </div>
         </div>
       </div>

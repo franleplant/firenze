@@ -1,14 +1,34 @@
-import { IMessage } from "dal/message";
+import { useEffect, useRef } from "react";
+
+import { getIpfsPath, IMessage, MsgURL } from "dal/message";
 
 export interface IProps {
-  msg: IMessage | undefined;
-  isLoading?: boolean;
+  msg?: IMessage;
   style?: any;
   address: string;
+  status: "sending" | "archiving" | "archived";
+  isLoading?: boolean;
+  timestamp: string;
+  msgURL?: MsgURL;
+  onMount?: () => void;
 }
 
+// TODO styling
 export default function Message(props: IProps) {
   const isFromLocalUser = props.msg?.from === props.address;
+
+  const onMount = useRef(props.onMount);
+  useEffect(() => {
+    onMount?.current?.();
+  }, [onMount]);
+
+  let link;
+  if (props.msgURL) {
+    // TODO support more protocols
+    const path = getIpfsPath(props.msgURL);
+    link = `${process.env.NEXT_PUBLIC_IPFS_GATEWAY}/ipfs/${path}`;
+  }
+
   return (
     <div
       style={{
@@ -17,20 +37,25 @@ export default function Message(props: IProps) {
         maxWidth: "500px",
         background: isFromLocalUser ? "#EEE" : "",
         alignSelf: isFromLocalUser ? "flex-end" : "flex-start",
-        //background: props.msg?.transient ? "grey" : "white",
         ...props.style,
       }}
     >
-      {props.isLoading ? (
-        "Loading..."
-      ) : (
+      <div>
         <div>
-          <div>
-            <small>{props.msg?.date}</small>
-          </div>
-          <div>{props.msg?.content}</div>
+          <small>{props.timestamp}</small>
+          <small>{` ${props.status}`}</small>
         </div>
-      )}
+        {link && (
+          <div>
+            <a href={link} target="__blank">
+              ipfs: ...{link.slice(-10)}
+            </a>
+          </div>
+        )}
+        <div style={{ marginTop: "20px" }}>
+          {props.isLoading ? "Loading..." : props.msg?.content}
+        </div>
+      </div>
     </div>
   );
 }
