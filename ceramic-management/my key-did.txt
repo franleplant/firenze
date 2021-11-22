@@ -1,3 +1,0 @@
-# DO NOT VERSION THIS FILE
-did=did:key:z6MknrzXHVG3GhNNd2mtD8nYBMpVY6gaeiDLyNqtq6m5pkxo
-seed=1110a0e0fe941c5cf9c0403108512f2c1f11e164c00deb9decc7baad31de917d
