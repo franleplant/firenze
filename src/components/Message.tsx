@@ -48,7 +48,7 @@ export default function Message(props: IProps) {
         {link && (
           <div>
             <a href={link} target="__blank">
-              ipfs
+              ipfs: ...{link.slice(-10)}
             </a>
           </div>
         )}
