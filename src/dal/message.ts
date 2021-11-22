@@ -1,9 +1,8 @@
-import { Caip10Link } from "@ceramicnetwork/stream-caip10-link";
 import { CeramicClient } from "@ceramicnetwork/http-client";
 import { PublicID, Core } from "@self.id/core";
 import { useIpfs, IContext } from "components/IPFS";
 import { useSelfID } from "components/SelfID";
-import { IPFS, CID } from "ipfs-core";
+import { CID } from "ipfs-core";
 // TODO get the CID from multiformats
 //https://github.com/multiformats/js-multiformats
 import { DID } from "dids";
@@ -17,6 +16,8 @@ import {
 } from "react-query";
 import invariant from "ts-invariant";
 import type { CID as CIDType } from "ipfs-core/src/block-storage";
+import { Caip10Link } from "@ceramicnetwork/stream-caip10-link";
+import type { JWE } from "did-jwt";
 
 // Eventually this will support more protocols like ethereum
 export type MsgURL = `ipfs://${string}`;
@@ -89,7 +90,11 @@ export function useSaveMessage(): UseMutationResult<
       const did = selfID.client.ceramic.did;
       invariant(did);
 
-      const cid = await save({ payload: msg }, { web3, did });
+      // TODO chainId
+      const cid = await save(
+        { payload: msg, chainId: 4 },
+        { web3, did, ceramic: selfID.client.ceramic }
+      );
       return cid;
     },
     {
@@ -105,15 +110,28 @@ export function useSaveMessage(): UseMutationResult<
 export async function save(
   params: {
     payload: IMessage;
+    // TODO chainId
+    chainId: number;
+    encrypted?: boolean;
   },
   deps: {
     web3: NonNullable<IContext["web3"]>;
     did: DID;
+    ceramic: CeramicClient;
   }
 ) {
   const { payload } = params;
 
-  const jws = await deps.did.createJWS(payload);
+  // TODO make encryption optioinal
+  const senderDid = deps.did.id;
+  const recipientDid = await getDidFromAddress({
+    address: payload.to,
+    chainId: params.chainId,
+    ceramic: deps.ceramic,
+  });
+
+  const jwe = await deps.did.createDagJWE(payload, [senderDid, recipientDid]);
+  const jws = await deps.did.createJWS(jwe);
   // we are actually not using the DAG part of the jws
   // because a) we don't really care about, the jws is self contained,
   // b) it requires special plugins out of ipfs making the deployment harder
@@ -138,20 +156,35 @@ export async function get(
     did: DID;
     ceramic: CeramicClient;
   }
-) {
+): Promise<IMessage> {
   const { cid } = params;
 
   const jws = await getJsonFromIpfs(cid, deps.ipfs);
+
   // TODO validate the shape
   // TODO handle errors
 
   const res = await deps.did.verifyJWS(jws);
-  const payload = res.payload as IMessage;
+  const payload = res.payload;
+
+  let msg: IMessage;
+  // duck type
+  if (payload?.to && payload?.from) {
+    // this means that the message was public
+    msg = payload as IMessage;
+  } else {
+    // duck type
+    invariant(payload?.protected, "invalid encrypted payload");
+    // this means that the message was encrypted
+    const jwe = payload as JWE;
+    msg = (await deps.did.decryptDagJWE(jwe)) as IMessage;
+    // TODO runtim type checks / schema validation
+  }
 
   const signerDid = res.didResolutionResult.didDocument?.id || "";
   const authorCryptoAccounts = await getCryptoAccounts(signerDid);
 
-  const authorAddress = payload.from;
+  const authorAddress = msg.from;
   // determine whether the signer of the message is the author or not,
   // we would expect they are the same and nobody is posing as anybody else,
   // if it is not trusted then we throw and error
@@ -169,7 +202,7 @@ export async function get(
     throw new Error("Corrupted message: it was signed not by the author");
   }
 
-  return payload;
+  return msg;
 }
 
 function jsonToFile(json: Record<string, any>): File {
@@ -215,9 +248,26 @@ export async function getCryptoAccounts(
   const cryptoAccounts = await publicId.get("cryptoAccounts");
   invariant(cryptoAccounts, "unexpected crypto accounts");
   return cryptoAccounts;
-  // otherway of getting it
-  //const accountLink = await Caip10Link.fromAccount(
-  //deps.ceramic as any,
-  //`${authorAddress}@eip155:${chainId}`
-  //);
+}
+
+export async function getDidFromAddress(params: {
+  address: string;
+  chainId: number;
+  blockchain?: "ethereum";
+  ceramic: CeramicClient;
+}): Promise<string> {
+  const { blockchain = "ethereum" } = params;
+  invariant(
+    blockchain === "ethereum",
+    "only ethereum compatible chains are supported"
+  );
+
+  const accountLink = await Caip10Link.fromAccount(
+    params.ceramic as any,
+    `${params.address}@eip155:${params.chainId}`
+  );
+
+  const did = accountLink.did;
+  invariant(did, "error getting did");
+  return did;
 }

@@ -221,8 +221,8 @@ const Home: NextPage = () => {
     return dateA < dateB ? -1 : 1;
   });
 
-  console.log("Inbox messages", inbox.messages);
-  console.log("UI messages", sortedMessages);
+  //console.log("Inbox messages", inbox.messages);
+  //console.log("UI messages", sortedMessages);
 
   return (
     <div className="page-container">
