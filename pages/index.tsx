@@ -71,7 +71,7 @@ const Home: NextPage = () => {
     "0x7dCE8a09aE403863dbAf9815DE20E4A7Bb18Ae9D".toLowerCase()
   );
 
-  const sendQueue = useSendQueue();
+  const sendQueue = useSendQueue(currentConvoId);
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   function scrollToLast() {
@@ -134,7 +134,7 @@ const Home: NextPage = () => {
       content: newMsg,
     };
 
-    sendQueue.push(msg, currentConvoId);
+    sendQueue.push(msg);
 
     const cid = await saveMessage({ msg });
 
@@ -192,7 +192,7 @@ const Home: NextPage = () => {
       convoId: currentConvoId,
       isArchived: false,
     })),
-    ...sendQueue.queue,
+    ...sendQueue.get(),
   ];
 
   const sortedMessages = uniqBy(messages, (e) => e.msgURL).sort((a, b) => {
@@ -290,37 +290,59 @@ const Home: NextPage = () => {
 
 export default Home;
 
-export function useSendQueue() {
-  const [queue, setQueue] = useState<Array<IMessageUI>>([]);
+export interface ISendQueue {
+  [convoId: string]: Array<IMessageUI>;
+}
 
-  function push(msg: IMessage, convoId: string): void {
-    setQueue((q) => [
-      ...q,
-      { preview: msg, timestamp: msg.date, convoId },
-    ]);
+export function useSendQueue(convoId: string) {
+  const [queue, setQueue] = useState<ISendQueue>({});
+
+  function push(msg: IMessage): void {
+    setQueue((q) => {
+      const convoQ = get();
+      return {
+        ...q,
+        [convoId]: [...convoQ, { preview: msg, timestamp: msg.date, convoId }],
+      };
+    });
   }
 
   function setURL(msg: IMessage, msgURL: MsgURL): void {
     setQueue((q) => {
-      return q.map((other) => {
-        if (other.preview?.id !== msg.id) {
-          return other;
-        }
+      const convoQ = get();
+      return {
+        ...q,
+        [convoId]: convoQ.map((other) => {
+          if (other.preview?.id !== msg.id) {
+            return other;
+          }
 
-        return {
-          ...other,
-          msgURL,
-        };
-      });
+          return {
+            ...other,
+            msgURL,
+          };
+        }),
+      };
     });
   }
 
   function pop(msgURL: MsgURL): void {
-    setQueue((q) => q.filter((other) => other.msgURL !== msgURL));
+    setQueue((q) => {
+      const convoQ = get();
+      return {
+        ...q,
+        [convoId]: convoQ.filter((other) => other.msgURL !== msgURL),
+      };
+    });
+  }
+
+  function get(): Array<IMessageUI> {
+    return queue[convoId] || [];
   }
 
   return {
     queue: queue,
+    get,
     push,
     pop,
     setURL,
