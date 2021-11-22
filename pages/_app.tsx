@@ -33,7 +33,13 @@ export function Loader({ children }: { children: JSX.Element | null }) {
   const { address } = useWallet();
 
   if (!selfID || !ipfs || !address) {
-    return <div>...LOADING...</div>;
+    return (
+      <div>
+        <div>...LOADING...</div>
+        <div>You need to have metamask installed</div>
+        <div>we only support ethereum rinkeby for now</div>
+      </div>
+    );
   }
 
   return children;
