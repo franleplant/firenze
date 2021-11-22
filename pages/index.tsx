@@ -71,7 +71,7 @@ const Home: NextPage = () => {
     "0x7dCE8a09aE403863dbAf9815DE20E4A7Bb18Ae9D".toLowerCase()
   );
 
-  const [sendingQueue, setSendingQueue] = useState<Array<IMessageUI>>([]);
+  const sendQueue = useSendQueue();
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   function scrollToLast() {
@@ -126,12 +126,6 @@ const Home: NextPage = () => {
       throw new Error(`we fucked up`);
     }
 
-    // TODO sign and encrypt and change the structure of the mailbox
-    // msg = sign(encrypt(payload))
-    // path = pushToIpfs(msg)
-    // pushToMailBox(convoId, path)
-
-    // TODO store this msg in memory to render it asap
     const msg: IMessage = {
       id: uuid(),
       from: address,
@@ -140,26 +134,12 @@ const Home: NextPage = () => {
       content: newMsg,
     };
 
-    setSendingQueue((q) => [
-      ...q,
-      { preview: msg, timestamp: msg.date, convoId: currentConvoId },
-    ]);
+    sendQueue.push(msg, currentConvoId);
 
     const cid = await saveMessage({ msg });
 
     const msgURL = toMsgURL(cid.toString());
-    setSendingQueue((q) => {
-      return q.map((other) => {
-        if (other.preview?.id !== msg.id) {
-          return other;
-        }
-
-        return {
-          ...other,
-          msgURL,
-        };
-      });
-    });
+    sendQueue.setURL(msg, msgURL);
 
     // send it to the recipient mailbox
     // and also to the sender mailbox, to be processed and archived
@@ -182,7 +162,7 @@ const Home: NextPage = () => {
       }),
     ]);
 
-    setSendingQueue((q) => q.filter((other) => other.msgURL !== msgURL));
+    sendQueue.pop(msgURL);
   }
 
   if (!selfID || !address || (isLoading && Object.keys(archive).length === 0)) {
@@ -212,7 +192,7 @@ const Home: NextPage = () => {
       convoId: currentConvoId,
       isArchived: false,
     })),
-    ...sendingQueue,
+    ...sendQueue.queue,
   ];
 
   const sortedMessages = uniqBy(messages, (e) => e.msgURL).sort((a, b) => {
@@ -309,3 +289,40 @@ const Home: NextPage = () => {
 };
 
 export default Home;
+
+export function useSendQueue() {
+  const [queue, setQueue] = useState<Array<IMessageUI>>([]);
+
+  function push(msg: IMessage, convoId: string): void {
+    setQueue((q) => [
+      ...q,
+      { preview: msg, timestamp: msg.date, convoId },
+    ]);
+  }
+
+  function setURL(msg: IMessage, msgURL: MsgURL): void {
+    setQueue((q) => {
+      return q.map((other) => {
+        if (other.preview?.id !== msg.id) {
+          return other;
+        }
+
+        return {
+          ...other,
+          msgURL,
+        };
+      });
+    });
+  }
+
+  function pop(msgURL: MsgURL): void {
+    setQueue((q) => q.filter((other) => other.msgURL !== msgURL));
+  }
+
+  return {
+    queue: queue,
+    push,
+    pop,
+    setURL,
+  };
+}
