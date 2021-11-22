@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-import { IMessage, MsgURL } from "dal/message";
+import { getIpfsPath, IMessage, MsgURL } from "dal/message";
 
 export interface IProps {
   msg?: IMessage;
@@ -22,6 +22,13 @@ export default function Message(props: IProps) {
     onMount?.current?.();
   }, [onMount]);
 
+  let link;
+  if (props.msgURL) {
+    // TODO support more protocols
+    const path = getIpfsPath(props.msgURL);
+    link = `${process.env.NEXT_PUBLIC_IPFS_GATEWAY}/ipfs/${path}`;
+  }
+
   return (
     <div
       style={{
@@ -38,9 +45,13 @@ export default function Message(props: IProps) {
           <small>{props.timestamp}</small>
           <small>{` ${props.status}`}</small>
         </div>
-        <div>
-          <small>{props.msgURL || ""}</small>
-        </div>
+        {link && (
+          <div>
+            <a href={link} target="__blank">
+              ipfs
+            </a>
+          </div>
+        )}
         <div style={{ marginTop: "20px" }}>
           {props.isLoading ? "Loading..." : props.msg?.content}
         </div>
