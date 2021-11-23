@@ -15,6 +15,11 @@
   },
   "dependencies": {
     "@ceramicnetwork/stream-caip10-link": "^1.2.2",
+    "@emotion/react": "^11.6.0",
+    "@emotion/server": "^11.4.0",
+    "@emotion/styled": "^11.6.0",
+    "@mui/icons-material": "^5.2.0",
+    "@mui/material": "^5.2.0",
     "@pinata/sdk": "^1.1.23",
     "@self.id/web": "^0.1.0",
     "@types/uuid": "^8.3.1",
