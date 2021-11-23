@@ -17,7 +17,8 @@ export function WalletProvider(props: IProps) {
   useEffect(() => {
     async function effect() {
       const addresses = await (window as any).ethereum.enable();
-      setAddress(addresses[0]);
+      const address = addresses[0] || ""
+      setAddress(address.toLowerCase());
     }
 
     effect();
