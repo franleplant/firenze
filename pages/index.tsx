@@ -8,7 +8,7 @@ import { useSelfID } from "components/SelfID";
 import { useWallet } from "components/Wallet";
 import MessageFromPath from "components/MessageFromPath";
 import { IMessage, MsgURL, toMsgURL, useSaveMessage } from "dal/message";
-import { IArchivedMessages, useArchive, useSaveArchive } from "dal/archive";
+import { IArchivedConvos, useArchive, useSaveArchive } from "dal/archive";
 import { useMailbox, useSaveToMailbox } from "dal/mailbox";
 import Composer from "components/Composer";
 import NewConversation from "components/NewConversation";
@@ -109,12 +109,16 @@ const Home: NextPage = () => {
     });
 
     // TODO abstract away
-    const archivePatch = {} as IArchivedMessages;
+    const archivePatch = {} as IArchivedConvos;
     envelopes.forEach(({ msg }) => {
-      const old = archivePatch[msg.convoId] || [];
-      archivePatch[msg.convoId] = [
+      // TODO review with Fran
+      const old = archivePatch[msg.convoId];
+      if (!Object.keys(archivePatch).includes(msg.convoId)) {
+        archivePatch[msg.convoId] = { messages: [] };
+      }
+      archivePatch[msg.convoId].messages = [
         { url: msg.msgURL, timestamp: msg.timestamp },
-        ...old,
+        ...(old?.messages || []),
       ];
     });
 
@@ -180,7 +184,7 @@ const Home: NextPage = () => {
   ];
 
   const messages: Array<IMessageUI> = [
-    ...(archive[currentConvoId] || []).map((archivedMsg) => ({
+    ...(archive[currentConvoId]?.messages || []).map((archivedMsg) => ({
       msgURL: archivedMsg.url,
       timestamp: archivedMsg.timestamp,
       convoId: currentConvoId,

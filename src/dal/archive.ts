@@ -15,16 +15,18 @@ import { MsgURL } from "./message";
 
 const TEMP_KEY = "firenze.message.v3";
 
-export interface IArchivedMessage {
+export interface IArchivedConvo {
   url: MsgURL;
   timestamp: string;
 }
 
-export interface IArchivedMessages {
-  [pubKey: string]: Array<IArchivedMessage>;
+export interface IArchivedConvos {
+  [convoID: string]: {
+    messages: Array<IArchivedConvo>;
+  };
 }
 
-export function useArchive(): UseQueryResult<IArchivedMessages> {
+export function useArchive(): UseQueryResult<IArchivedConvos> {
   const { selfID } = useSelfID();
   return useQuery({
     queryKey: `messageHistory`,
@@ -47,10 +49,10 @@ export function useArchive(): UseQueryResult<IArchivedMessages> {
       //],
       //} as IArchivedMessages;
 
-      const profile = await selfID.get("basicProfile");
-      const archivedMessages: IArchivedMessages = profile?.[TEMP_KEY] || {};
-      console.log("archive", archivedMessages);
-      return archivedMessages;
+      const myConversations: IArchivedConvos =
+        (await selfID.get("myConversations")) || {};
+      console.log("archive", myConversations);
+      return myConversations;
     },
   });
 }
@@ -61,9 +63,9 @@ export function useArchive(): UseQueryResult<IArchivedMessages> {
  * to your message list in ceramic
  */
 export function useSaveArchive(): UseMutationResult<
-  IArchivedMessages,
+  IArchivedConvos,
   unknown,
-  IArchivedMessages
+  IArchivedConvos
 > {
   const queryClient = useQueryClient();
   const { selfID } = useSelfID();
@@ -73,36 +75,32 @@ export function useSaveArchive(): UseMutationResult<
         return {};
       }
 
-      const profile = await selfID.get("basicProfile");
-      const archivedMessages: IArchivedMessages = profile?.[TEMP_KEY] || {};
+      const myConversations: IArchivedConvos =
+        (await selfID.get("myConversations")) || {};
 
-      Object.entries(newMessages).forEach(([convoId, messages]) => {
+      Object.entries(newMessages).forEach(([convoId, newMessages]) => {
         // TODO this merge logic needs to be much more robust
-        const oldConvo = archivedMessages[convoId] || [];
-        archivedMessages[convoId] = [...messages, ...oldConvo];
+        const oldConvo = myConversations[convoId] || { messages: [] };
+        myConversations[convoId] = {
+          messages: [...newMessages.messages, ...oldConvo.messages],
+        };
       });
 
-      await selfID.set("basicProfile", {
-        // store references into ceramic
-        // TODO it would be nice to store also dates here to make it simpler to order by date
-        // TODO this does not scale at all.
-        // We need some sort of block or separation of ids to make it possible to "fetch the last 1000 posts" and then
-        // decide if the user wants the others (or maybe its already cached)
-        // Soemthing like this might work
-        //
-        // ListOfMessages = [m1_cid, m2_cid, ..., mn_cid, nextListOfMessagesStream]
-        // And so with this you get the first n messages, and if you want more then you just
-        // fetch the next stream. And so on and so forth.
-        //
-        // Also, it would be nice to segment messages by conversations or threads, i.e. conversationWith: [pubKey: string]: ListOfMessages
-        //
-        [TEMP_KEY]: archivedMessages,
-      });
-
-      return archivedMessages;
+      // store references into ceramic
+      // TODO this does not scale at all.
+      // We need some sort of block or separation of ids to make it possible to "fetch the last 1000 posts" and then
+      // decide if the user wants the others (or maybe its already cached)
+      // Soemthing like this might work
+      //
+      // ListOfMessages = [m1_cid, m2_cid, ..., mn_cid, nextListOfMessagesStream]
+      // And so with this you get the first n messages, and if you want more then you just
+      // fetch the next stream. And so on and so forth.
+      //
+      await selfID.set("myConversations", myConversations);
+      return myConversations;
     },
     {
-      onSuccess: (messages: IArchivedMessages) => {
+      onSuccess: (messages: IArchivedConvos) => {
         queryClient.setQueryData(`messageHistory`, messages);
       },
     }

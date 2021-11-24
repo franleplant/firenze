@@ -7,6 +7,9 @@ import { getResolver } from 'key-did-resolver'
 import { fromString } from 'uint8arrays'
 import dotenv from 'dotenv'
 
+import profileModel from "./schemas/profile.json"
+import conversationsModel from "./schemas/conversations.json"
+
 dotenv.config()
 // The key must be provided as an environment variable
 const key = fromString(process.env.DID_KEY, 'base16')
@@ -21,14 +24,13 @@ await did.authenticate()
 console.log(`Authenticated DID ${did.id}`)
 
 // Connect to the local Ceramic node
-const ceramic = new CeramicClient('http://localhost:7007')
+const ceramicNodeURL = process.env.CERAMIC_NODE || 'http://localhost:7007';
+console.log(`Connecting to Ceramic Node on: ${ceramicNodeURL}`)
+const ceramic = new CeramicClient(ceramicNodeURL)
 ceramic.did = did
 
 // Create a manager for the model
 const manager = new ModelManager(ceramic)
-
-import profileModel from "./schemas/profile.json"
-import conversationsModel from "./schemas/conversations.json"
 
 const profileSchemaSID = await manager.createSchema('Profile', profileModel)
 const conversationsSchemaSID = await manager.createSchema('Conversations', conversationsModel)

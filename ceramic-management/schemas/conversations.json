@@ -3,18 +3,20 @@
   "title": "Conversations",
   "type": "object",
   "additionalProperties": {
-    "name": "convoId",
     "type": "object",
     "properties": {
       "messages" : {
         "type": "array",
         "items": {
-          "url": {
-            "type": "string",
-            "description": "IPFS url"
-          },
-          "timestamp": {
-            "type": "string"
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string",
+              "description": "IPFS url"
+            },
+            "timestamp": {
+              "type": "string"
+            }
           }
         }
       }
