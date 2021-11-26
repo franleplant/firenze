@@ -11,7 +11,8 @@
     "format": "yarn prettier --write",
     "format-check": "yarn prettier --check",
     "ci": "yarn lint && yarn format-check && yarn typecheck",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "ceramic-create-model": "ts-node --experimental-json-modules create-model.mjs"
   },
   "dependencies": {
     "@ceramicnetwork/stream-caip10-link": "^1.2.2",
