@@ -1,6 +1,8 @@
 import { useEffect, useState, useContext, createContext } from "react";
 import { EthereumAuthProvider, SelfID } from "@self.id/web";
 
+import ceramicModel from "../../ceramic-management/published-model.json";
+
 import { useWallet } from "components/Wallet";
 
 export interface IContext {
@@ -32,21 +34,7 @@ export function SelfIDProvider(props: IProps) {
         ceramic: "testnet-clay",
         //connectNetwork: 'testnet-clay',
         // TODO import from env specific json file
-        model: {
-          definitions: {
-            myProfile:
-              "kjzl6cwe1jw14b2finpk5xng8syumocr79s97umf15e8acxn8j9kwb08z803v3g",
-            myConversations:
-              "kjzl6cwe1jw145ebogdly1z86gh7kg7q980m5ne2yli5eo2o06ujip3gi9osj3y",
-          },
-          schemas: {
-            Profile:
-              "ceramic://k3y52l7qbv1frymbaqwv4nmj6qzqybk442vdlxus2li2karqx8iv69z7k82vwee4g",
-            Conversations:
-              "ceramic://k3y52l7qbv1fryfrb38g010411bxbc3jam75a50enxn2spjt3jkgranzg5a25mcjk",
-          },
-          tiles: {},
-        },
+        model: ceramicModel,
       });
 
       setSelfID(selfID);

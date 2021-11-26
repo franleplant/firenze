@@ -15,14 +15,14 @@ import { MsgURL } from "./message";
 
 const TEMP_KEY = "firenze.message.v3";
 
-export interface IArchivedConvo {
+export interface IArchivedMessage {
   url: MsgURL;
   timestamp: string;
 }
 
 export interface IArchivedConvos {
   [convoID: string]: {
-    messages: Array<IArchivedConvo>;
+    messages: Array<IArchivedMessage>;
   };
 }
 
@@ -82,6 +82,7 @@ export function useSaveArchive(): UseMutationResult<
         // TODO this merge logic needs to be much more robust
         const oldConvo = myConversations[convoId] || { messages: [] };
         myConversations[convoId] = {
+          ...oldConvo,
           messages: [...newMessages.messages, ...oldConvo.messages],
         };
       });
