@@ -54,6 +54,6 @@ a {
 
 
 .messages_composer {
-  height: 50px;
+  height: fit-content;
   padding: 10px;
 }
