@@ -12,7 +12,7 @@
     "format-check": "yarn prettier --check",
     "ci": "yarn lint && yarn format-check && yarn typecheck",
     "prepare": "husky install",
-    "ceramic-create-model": "ts-node ./ceramic-management/create-model.ts"
+    "ceramic-create-update-model": "ts-node ./ceramic-management/create-update-model.ts"
   },
   "dependencies": {
     "@ceramicnetwork/stream-caip10-link": "^1.2.2",

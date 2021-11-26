@@ -18,7 +18,6 @@ async function main() {
 
   // The key must be provided as an environment variable
   const didKey = process.env.DID_KEY;
-  console.log(__dirname);
   invariant(didKey);
   const key = fromString(didKey, 'base16');
   
