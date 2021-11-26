@@ -12,11 +12,15 @@ import profileModel from "./schemas/profile.json"
 import conversationsModel from "./schemas/conversations.json"
 
 async function main() {
-  dotenv.config();
+  // hacky way to work around the fact that calling this from the parent project causes trouble with resolving .env paths
+  // todo: is there a better way to do this? probably 
+  dotenv.config( { path: __dirname + "/.env" });
 
   // The key must be provided as an environment variable
-  invariant(process.env.DID_KEY);
-  const key = fromString(process.env.DID_KEY, 'base16');
+  const didKey = process.env.DID_KEY;
+  console.log(__dirname);
+  invariant(didKey);
+  const key = fromString(didKey, 'base16');
   
   // Create and authenticate the DID
   const did = new DID({
@@ -65,7 +69,7 @@ async function main() {
 }
 
 main().then(text => {
-  console.log(text);
+  console.log("Finished running scenario");
 })
 .catch(err => {
   throw err;
