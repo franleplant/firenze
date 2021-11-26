@@ -12,7 +12,7 @@
           "properties": {
             "url": {
               "type": "string",
-              "description": "IPFS url"
+              "description": "URL of where the message is stored"
             },
             "timestamp": {
               "type": "string"

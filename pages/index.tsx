@@ -111,15 +111,13 @@ const Home: NextPage = () => {
     // TODO abstract away
     const archivePatch = {} as IArchivedConvos;
     envelopes.forEach(({ msg }) => {
-      // TODO review with Fran
-      const old = archivePatch[msg.convoId];
-      if (!Object.keys(archivePatch).includes(msg.convoId)) {
-        archivePatch[msg.convoId] = { messages: [] };
+      let old = archivePatch[msg.convoId];
+      if (!old) {
+        old = { messages: [] };
+        archivePatch[msg.convoId] = old;
       }
-      archivePatch[msg.convoId].messages = [
-        { url: msg.msgURL, timestamp: msg.timestamp },
-        ...(old?.messages || []),
-      ];
+      const newMsg = { url: msg.msgURL, timestamp: msg.timestamp };
+      archivePatch[msg.convoId].messages = [newMsg, ...old.messages];
     });
 
     await saveMessageHistory(archivePatch);

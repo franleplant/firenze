@@ -46,7 +46,8 @@ export function useInbox({ archive, convoId }: IInboxArgs): IInbox {
     // if the archive is empty do also the same
     if (
       currentConvoInbox.length === 0 ||
-      currentConvoArchive.messages.length === 0
+      (currentConvoArchive.messages &&
+        currentConvoArchive.messages.length === 0)
     ) {
       return;
     }
@@ -56,7 +57,7 @@ export function useInbox({ archive, convoId }: IInboxArgs): IInbox {
     // TODO this is super inefficient, make it better
     const isArchived = (targetUrl: MsgURL): boolean => {
       return currentConvoArchive.messages
-        .map(({ url }) => url)
+        ?.map(({ url }) => url)
         .includes(targetUrl);
     };
 
