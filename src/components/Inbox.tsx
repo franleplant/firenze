@@ -3,7 +3,7 @@ import useDeepCompareEffect from "use-deep-compare-effect";
 
 import { IMailboxEnvelope } from "dal/mailbox";
 import { MsgURL } from "dal/message";
-import { IArchivedMessages } from "dal/archive";
+import { IArchivedConvos } from "dal/archive";
 
 // TODO abstract away
 export interface IInboxMessages {
@@ -11,7 +11,7 @@ export interface IInboxMessages {
 }
 
 export interface IInboxArgs {
-  archive: IArchivedMessages;
+  archive: IArchivedConvos;
   convoId: string;
 }
 
@@ -44,7 +44,11 @@ export function useInbox({ archive, convoId }: IInboxArgs): IInbox {
     //if(true) {return}
     // If the inbox is emtpy for that conversation then simply skip this hook
     // if the archive is empty do also the same
-    if (currentConvoInbox.length === 0 || currentConvoArchive.length === 0) {
+    if (
+      currentConvoInbox.length === 0 ||
+      (currentConvoArchive.messages &&
+        currentConvoArchive.messages.length === 0)
+    ) {
       return;
     }
 
@@ -52,7 +56,9 @@ export function useInbox({ archive, convoId }: IInboxArgs): IInbox {
 
     // TODO this is super inefficient, make it better
     const isArchived = (targetUrl: MsgURL): boolean => {
-      return currentConvoArchive.map(({ url }) => url).includes(targetUrl);
+      return currentConvoArchive.messages
+        ?.map(({ url }) => url)
+        .includes(targetUrl);
     };
 
     setInbox((inbox) => {

@@ -1,6 +1,8 @@
 import { useEffect, useState, useContext, createContext } from "react";
 import { EthereumAuthProvider, SelfID } from "@self.id/web";
 
+import ceramicModel from "../../ceramic-management/published-model.json";
+
 import { useWallet } from "components/Wallet";
 
 export interface IContext {
@@ -31,6 +33,8 @@ export function SelfIDProvider(props: IProps) {
         // TODO env variable
         ceramic: "testnet-clay",
         //connectNetwork: 'testnet-clay',
+        // TODO import from env specific json file
+        model: ceramicModel,
       });
 
       setSelfID(selfID);
