@@ -13,7 +13,6 @@ import {
 } from "react-query";
 import { MsgURL } from "./message";
 
-
 export interface IArchivedMessage {
   url: MsgURL;
   timestamp: string;

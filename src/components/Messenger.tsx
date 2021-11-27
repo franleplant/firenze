@@ -108,7 +108,7 @@ export default function Messenger(props: IProps) {
     });
 
     // TODO abstract away
-		const archivePatch = {} as IArchivedConvos;
+    const archivePatch = {} as IArchivedConvos;
     envelopes.forEach(({ msg }) => {
       let old = archivePatch[msg.convoId];
       if (!old) {
