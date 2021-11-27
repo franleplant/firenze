@@ -3,7 +3,7 @@ import { EthereumAuthProvider, SelfID } from "@self.id/web";
 
 import ceramicModel from "../../ceramic-management/published-model.json";
 
-import { useWallet } from "components/Wallet";
+import { useWeb3Session } from "hooks/web3";
 
 export interface IContext {
   selfID: SelfID | undefined;
@@ -16,7 +16,7 @@ export interface IProps {
 }
 
 export function SelfIDProvider(props: IProps) {
-  const { address } = useWallet();
+  const { account: address } = useWeb3Session();
   const [selfID, setSelfID] = useState<SelfID | undefined>();
 
   useEffect(() => {

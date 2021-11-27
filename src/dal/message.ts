@@ -18,6 +18,7 @@ import invariant from "ts-invariant";
 import type { CID as CIDType } from "ipfs-core/src/block-storage";
 import { Caip10Link } from "@ceramicnetwork/stream-caip10-link";
 import type { JWE } from "did-jwt";
+import { useWeb3Session } from "hooks/web3";
 
 // Eventually this will support more protocols like ethereum
 export type MsgURL = `ipfs://${string}`;
@@ -82,17 +83,18 @@ export function useSaveMessage(): UseMutationResult<
   const queryClient = useQueryClient();
   const { web3 } = useIpfs();
   const { selfID } = useSelfID();
+  const { chainId } = useWeb3Session();
 
   return useMutation(
     async ({ msg }) => {
       invariant(web3);
+      invariant(chainId);
       invariant(selfID);
       const did = selfID.client.ceramic.did;
       invariant(did);
 
-      // TODO chainId
       const cid = await save(
-        { payload: msg, chainId: 4 },
+        { payload: msg, chainId },
         { web3, did, ceramic: selfID.client.ceramic }
       );
       return cid;

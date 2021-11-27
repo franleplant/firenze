@@ -13,8 +13,6 @@ import {
 } from "react-query";
 import { MsgURL } from "./message";
 
-const TEMP_KEY = "firenze.message.v3";
-
 export interface IArchivedMessage {
   url: MsgURL;
   timestamp: string;
@@ -39,15 +37,6 @@ export function useArchive(): UseQueryResult<IArchivedConvos> {
       // uncomment to remove all messages
       //await selfID.set("basicProfile", { [TEMP_KEY]: {}, });
       //console.log("clean slated the archive")
-
-      //return {
-      //"0x7dce8a09ae403863dbaf9815de20e4a7bb18ae9d": [
-      //{
-      //url: "ipfs://bagcqcerammm4rci4jsrk2zs5xm5b4h6girwjv24xkpc3r5hqkpvxxqza42sq",
-      //timestamp: new Date().toISOString(),
-      //},
-      //],
-      //} as IArchivedMessages;
 
       const myConversations: IArchivedConvos =
         (await selfID.get("myConversations")) || {};
