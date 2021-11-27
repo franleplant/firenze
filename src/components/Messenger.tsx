@@ -2,33 +2,17 @@ import type { NextPage } from "next";
 import uniqBy from "lodash.uniqby";
 import { useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
-import invariant from "ts-invariant";
 
-import ConvoItem from "./ConvoItem";
+import ConversationList from "components/ConversationList";
+import Conversation from "components/Conversation";
 
 import { useSelfID } from "components/SelfID";
-import MessageFromPath from "components/MessageFromPath";
 import { IMessage, MsgURL, toMsgURL, useSaveMessage } from "dal/message";
 import { IArchivedConvos, useArchive, useSaveArchive } from "dal/archive";
 import { useMailbox, useSaveToMailbox } from "dal/mailbox";
-import Composer from "components/Composer";
-import NewConversation from "components/NewConversation";
 import { useInbox } from "components/Inbox";
-import Message from "components/Message";
 import { useAddress, useWeb3Session } from "hooks/web3";
 import { useSendQueue } from "components/SendQueue";
-
-//
-// TODO
-// - UI
-// - the consuming messages from Q needs to be more dynamic,
-//   - first get the message from the Q and display it
-//   - give the user the chance to chose not to store it in ceramic
-//   - build UI to display this change in status (msg in memory, msg in ceramic, msg rejected)
-// - ENS domains
-//
-//
-//
 
 export interface IConversation {
   // pubkey
@@ -60,26 +44,20 @@ const HARDCODED_THREADS: Array<IConversation> = [
   },
 ];
 
-export interface IProps {}
+export interface IProps {
+  convoId?: string;
+  onConversationChange: (convoId: string) => void;
+}
 
 export default function Messenger(props: IProps) {
   const { selfID } = useSelfID();
   const address = useAddress();
 
-  const [currentConvoId, setCurrentConvoId] = useState(
-    "0x7dCE8a09aE403863dbAf9815DE20E4A7Bb18Ae9D".toLowerCase()
-  );
+  // TODO improve
+  // we should handle correctly the case where no convoId is selected
+  const currentConvoId = props.convoId || HARDCODED_THREADS[0].address;
 
   const sendQueue = useSendQueue(currentConvoId);
-
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
-  function scrollToLast() {
-    // Scroll to the bottom to reveal last message
-    const element = messagesContainerRef.current;
-    if (element) {
-      element.scrollTop = element.scrollHeight;
-    }
-  }
 
   // archive
   const { data: archive = {}, isLoading } = useArchive();
@@ -166,7 +144,7 @@ export default function Messenger(props: IProps) {
     sendQueue.pop(msgURL);
   }
 
-  if (!selfID || !address || (isLoading && Object.keys(archive).length === 0)) {
+  if ((isLoading && Object.keys(archive).length === 0)) {
     return <div>loading...</div>;
   }
 
@@ -209,77 +187,15 @@ export default function Messenger(props: IProps) {
   return (
     <div className="page-container">
       <div className="container">
-        <div className="contacts__container">
-          <div className="contact__item" style={{ background: "grey" }}>
-            <NewConversation
-              onNew={(newThreadId) => setCurrentConvoId(newThreadId)}
-            />
-          </div>
-
-          {uniqBy(threads, (e) => e.address).map((contact) => (
-            <ConvoItem
-              key={contact.address}
-              address={contact.address}
-              isSelected={contact.address === currentConvoId}
-              onClick={() => {
-                setCurrentConvoId(contact.address);
-              }}
-            />
-          ))}
-        </div>
-        <div className="messages__container">
-          <div
-            style={{
-              //marginTop: "20px",
-              padding: "10px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "10px",
-              //maxWidth: "900px",
-              background: "#FAFAFA",
-              overflowY: "scroll",
-              flex: "1",
-            }}
-            ref={messagesContainerRef}
-          >
-            {sortedMessages.map((msg, index) => {
-              // is still sending
-              if (!msg.msgURL) {
-                invariant(
-                  msg.preview,
-                  "a message without a url should have a preview"
-                );
-                return (
-                  <Message
-                    key={index}
-                    status={"sending"}
-                    timestamp={msg.timestamp}
-                    msg={msg.preview}
-                    // TODO review this prop, it is not understanable
-                    address={address}
-                    onMount={() => scrollToLast()}
-                  />
-                );
-              }
-
-              return (
-                <MessageFromPath
-                  key={index}
-                  msgURL={msg.msgURL}
-                  timestamp={msg.timestamp}
-                  status={msg.isArchived ? "archived" : "archiving"}
-                  // TODO review this prop, it is not understanable
-                  address={address}
-                  onSuccess={() => scrollToLast()}
-                />
-              );
-            })}
-          </div>
-          <div className="messages_composer">
-            <Composer onSend={onSend} isSavingMessage={isSavingMessage} />
-          </div>
-        </div>
+        <ConversationList
+          convoId={currentConvoId}
+          onConversationChange={props.onConversationChange}
+          conversations={uniqBy(threads, (e) => e.address).map((e) => ({
+            convoId: e.address,
+          }))}
+        />
       </div>
+      <Conversation messages={sortedMessages} onSend={onSend} />
     </div>
   );
 }

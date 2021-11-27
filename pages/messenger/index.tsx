@@ -1,5 +1,6 @@
 import type { NextPage } from "next";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/router";
 
 // We need to make dynamic imports that only happen in the browser because
 // the app relies on some browser globals. Eventually we could fix them but
@@ -13,9 +14,15 @@ const App = dynamic(() => import("components/App"), {
 const Messenger = dynamic(() => import("components/Messenger"), { ssr: false });
 
 const Home: NextPage = () => {
+  const router = useRouter();
+
   return (
     <App>
-      <Messenger />
+      <Messenger
+        onConversationChange={(convoID) => {
+          router.push(`/messenger/${convoID}`);
+        }}
+      />
     </App>
   );
 };
