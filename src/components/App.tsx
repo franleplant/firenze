@@ -70,7 +70,7 @@ export function Loader({ children }: { children: JSX.Element | null }) {
         <CircularProgress />
         <Typography variant="body1" color="textPrimary">
           If this is your first time you might need to create a new profile, but
-          don't worry, the process is super easy.
+          do not worry, the process is super easy.
         </Typography>
       </>
     );

@@ -2,6 +2,7 @@ import { useEffect, useState, useContext, createContext } from "react";
 import { EthereumAuthProvider, SelfID } from "@self.id/web";
 
 import ceramicModel from "../../ceramic-management/published-model.json";
+
 import { useWeb3Session } from "hooks/web3";
 
 export interface IContext {
