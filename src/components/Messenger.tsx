@@ -9,7 +9,7 @@ import ConvoItem from "./ConvoItem";
 import { useSelfID } from "components/SelfID";
 import MessageFromPath from "components/MessageFromPath";
 import { IMessage, MsgURL, toMsgURL, useSaveMessage } from "dal/message";
-import { IArchivedMessages, useArchive, useSaveArchive } from "dal/archive";
+import { IArchivedConvos, useArchive, useSaveArchive } from "dal/archive";
 import { useMailbox, useSaveToMailbox } from "dal/mailbox";
 import Composer from "components/Composer";
 import NewConversation from "components/NewConversation";
@@ -108,13 +108,15 @@ export default function Messenger(props: IProps) {
     });
 
     // TODO abstract away
-    const archivePatch = {} as IArchivedMessages;
+		const archivePatch = {} as IArchivedConvos;
     envelopes.forEach(({ msg }) => {
-      const old = archivePatch[msg.convoId] || [];
-      archivePatch[msg.convoId] = [
-        { url: msg.msgURL, timestamp: msg.timestamp },
-        ...old,
-      ];
+      let old = archivePatch[msg.convoId];
+      if (!old) {
+        old = { messages: [] };
+        archivePatch[msg.convoId] = old;
+      }
+      const newMsg = { url: msg.msgURL, timestamp: msg.timestamp };
+      archivePatch[msg.convoId].messages = [newMsg, ...old.messages];
     });
 
     await saveMessageHistory(archivePatch);
@@ -179,7 +181,7 @@ export default function Messenger(props: IProps) {
   ];
 
   const messages: Array<IMessageUI> = [
-    ...(archive[currentConvoId] || []).map((archivedMsg) => ({
+    ...(archive[currentConvoId]?.messages || []).map((archivedMsg) => ({
       msgURL: archivedMsg.url,
       timestamp: archivedMsg.timestamp,
       convoId: currentConvoId,
