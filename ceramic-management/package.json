@@ -2,10 +2,6 @@
   "name": "firenze-ceramic-management",
   "version": "1.0.0",
   "description": "This project keeps the logic in charge of creating and publishing the Ceramic Data Model for Firenze",
-  "main": "index.js",
-  "scripts": {
-    "create-model": "node --experimental-json-modules create-model.mjs"
-  },
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -17,6 +13,8 @@
     "dotenv": "^10.0.0",
     "key-did-provider-ed25519": "^1.1.0",
     "key-did-resolver": "^1.4.0",
+    "ts-invariant": "^0.9.3",
+    "ts-node": "^10.4.0",
     "uint8arrays": "^3.0.0"
   },
   "devDependencies": {
