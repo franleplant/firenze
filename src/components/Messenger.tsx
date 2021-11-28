@@ -5,14 +5,13 @@ import { v4 as uuid } from "uuid";
 
 import ConversationList from "components/ConversationList";
 import Conversation from "components/Conversation";
-
 import { useSelfID } from "components/SelfID";
 import { IMessage, MsgURL, toMsgURL, useSaveMessage } from "dal/message";
 import { IArchivedConvos, useArchive, useSaveArchive } from "dal/archive";
 import { useMailbox, useSaveToMailbox } from "dal/mailbox";
-import { useInbox } from "components/Inbox";
+import { IInbox, useInbox } from "components/Inbox";
 import { useAddress, useWeb3Session } from "hooks/web3";
-import { useSendQueue } from "components/SendQueue";
+import { ISendQueue, useSendQueue } from "components/SendQueue";
 
 export interface IConversation {
   // pubkey
@@ -53,9 +52,7 @@ export default function Messenger(props: IProps) {
   const { selfID } = useSelfID();
   const address = useAddress();
 
-  // TODO improve
-  // we should handle correctly the case where no convoId is selected
-  const currentConvoId = props.convoId || HARDCODED_THREADS[0].address;
+  const currentConvoId = props.convoId;
 
   const sendQueue = useSendQueue(currentConvoId);
 
@@ -67,8 +64,7 @@ export default function Messenger(props: IProps) {
   const { mutateAsync: SaveToMailbox } = useSaveToMailbox();
 
   // ipfs
-  const { mutateAsync: saveMessage, isLoading: isSavingMessage } =
-    useSaveMessage();
+  const { mutateAsync: saveMessage } = useSaveMessage();
 
   // inbox
   const inbox = useInbox({ archive, convoId: currentConvoId });
@@ -144,10 +140,6 @@ export default function Messenger(props: IProps) {
     sendQueue.pop(msgURL);
   }
 
-  if ((isLoading && Object.keys(archive).length === 0)) {
-    return <div>loading...</div>;
-  }
-
   const toThread = (pubKey: string) => ({
     address: pubKey.toLowerCase(),
   });
@@ -158,31 +150,17 @@ export default function Messenger(props: IProps) {
     ...Object.keys(inbox.messages).map(toThread),
   ];
 
-  const messages: Array<IMessageUI> = [
-    ...(archive[currentConvoId]?.messages || []).map((archivedMsg) => ({
-      msgURL: archivedMsg.url,
-      timestamp: archivedMsg.timestamp,
-      convoId: currentConvoId,
-      isArchived: true,
-    })),
-    ...(inbox.messages[currentConvoId] || []).map((envelope) => ({
-      msgURL: envelope.msg.msgURL,
-      timestamp: envelope.msg.timestamp,
-      convoId: currentConvoId,
-      isArchived: false,
-    })),
-    ...sendQueue.get(),
-  ];
-
-  const sortedMessages = uniqBy(messages, (e) => e.msgURL).sort((a, b) => {
-    const dateA = new Date(a.timestamp).valueOf();
-    const dateB = new Date(b.timestamp).valueOf();
-    return dateA < dateB ? -1 : 1;
+  const messages = useCombineMessages({
+    convoId: currentConvoId,
+    archive,
+    inbox,
+    sendQueue,
   });
 
-  //console.log("Inbox messages", inbox.messages);
-  //console.log("UI messages", sortedMessages);
-  //
+  // TODO improve
+  if (isLoading && Object.keys(archive).length === 0) {
+    return <div>loading...</div>;
+  }
 
   return (
     <div className="page-container">
@@ -195,7 +173,51 @@ export default function Messenger(props: IProps) {
           }))}
         />
       </div>
-      <Conversation messages={sortedMessages} onSend={onSend} />
+      <Conversation messages={messages} onSend={onSend} />
     </div>
   );
+}
+
+// TODO memoize
+export function useCombineMessages({
+  convoId,
+  archive,
+  inbox,
+  sendQueue,
+}: {
+  convoId: string | undefined;
+  archive: IArchivedConvos;
+  inbox: IInbox;
+  sendQueue: ISendQueue;
+}): Array<IMessageUI> {
+  if (!convoId) {
+    return [];
+  }
+
+  const archivedMsgs = archive[convoId]?.messages || [];
+  const inboxMsgs = inbox.messages[convoId] || [];
+
+  const messages: Array<IMessageUI> = [
+    ...archivedMsgs.map((archivedMsg) => ({
+      msgURL: archivedMsg.url,
+      timestamp: archivedMsg.timestamp,
+      convoId,
+      isArchived: true,
+    })),
+    ...inboxMsgs.map((envelope) => ({
+      msgURL: envelope.msg.msgURL,
+      timestamp: envelope.msg.timestamp,
+      convoId,
+      isArchived: false,
+    })),
+    ...sendQueue.get(),
+  ];
+
+  const sortedMessages = uniqBy(messages, (e) => e.msgURL).sort((a, b) => {
+    const dateA = new Date(a.timestamp).valueOf();
+    const dateB = new Date(b.timestamp).valueOf();
+    return dateA < dateB ? -1 : 1;
+  });
+
+  return sortedMessages;
 }

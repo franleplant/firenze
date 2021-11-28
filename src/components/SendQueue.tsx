@@ -1,16 +1,26 @@
 import { useRef, useState } from "react";
+import invariant from "ts-invariant";
 
 import { IMessage, MsgURL } from "dal/message";
 import type { IMessageUI } from "components/Messenger";
 
-export interface ISendQueue {
+export interface ISendQueueMessages {
   [convoId: string]: Array<IMessageUI>;
 }
 
-export function useSendQueue(convoId: string) {
-  const [queue, setQueue] = useState<ISendQueue>({});
+export interface ISendQueue {
+  push: (msg: IMessage) => void;
+  setURL: (msg: IMessage, msgURL: MsgURL) => void;
+  pop: (msgURL: MsgURL) => void;
+  get: () => Array<IMessageUI>;
+  queue: ISendQueueMessages;
+}
+
+export function useSendQueue(convoId: string | undefined): ISendQueue {
+  const [queue, setQueue] = useState<ISendQueueMessages>({});
 
   function push(msg: IMessage): void {
+    invariant(convoId);
     setQueue((q) => {
       const convoQ = get();
       return {
@@ -21,6 +31,7 @@ export function useSendQueue(convoId: string) {
   }
 
   function setURL(msg: IMessage, msgURL: MsgURL): void {
+    invariant(convoId);
     setQueue((q) => {
       const convoQ = get();
       return {
@@ -40,6 +51,7 @@ export function useSendQueue(convoId: string) {
   }
 
   function pop(msgURL: MsgURL): void {
+    invariant(convoId);
     setQueue((q) => {
       const convoQ = get();
       return {
@@ -50,7 +62,7 @@ export function useSendQueue(convoId: string) {
   }
 
   function get(): Array<IMessageUI> {
-    return queue[convoId] || [];
+    return queue[convoId || "fake"] || [];
   }
 
   return {

@@ -7,7 +7,7 @@ export interface IConversation {
 }
 
 export interface IProps {
-  convoId: string;
+  convoId?: string;
   conversations: Array<IConversation>;
   onConversationChange: (convoId: string) => void;
 }
