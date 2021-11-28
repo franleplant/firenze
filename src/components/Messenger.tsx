@@ -1,9 +1,9 @@
-import type { NextPage } from "next";
 import uniqBy from "lodash.uniqby";
-import { useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
+import { useTheme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
 
-import ConversationList from "components/ConversationList";
+import ConversationSelect from "components/ConversationSelect";
 import Conversation from "components/Conversation";
 import { useSelfID } from "components/SelfID";
 import { IMessage, MsgURL, toMsgURL, useSaveMessage } from "dal/message";
@@ -48,7 +48,14 @@ export interface IProps {
   onConversationChange: (convoId: string) => void;
 }
 
+// TODO explain why all state handling of both converstaion selector and conversation
+// are in this component instead of abstracted there
 export default function Messenger(props: IProps) {
+  // infer if we have a converstation selected and therefore
+  // we are showing the conversation messages or we are in the conversation select
+  const isConvoMessagesScreen = !!props.convoId;
+  const layout = useLayout(isConvoMessagesScreen);
+
   const { selfID } = useSelfID();
   const address = useAddress();
 
@@ -162,18 +169,29 @@ export default function Messenger(props: IProps) {
     return <div>loading...</div>;
   }
 
+  console.log("asd", layout);
+
   return (
     <div className="page-container">
       <div className="container">
-        <ConversationList
-          convoId={currentConvoId}
-          onConversationChange={props.onConversationChange}
-          conversations={uniqBy(threads, (e) => e.address).map((e) => ({
-            convoId: e.address,
-          }))}
-        />
+        {layout.showConvoSelect && (
+          <ConversationSelect
+            convoId={currentConvoId}
+            onConversationChange={props.onConversationChange}
+            conversations={uniqBy(threads, (e) => e.address).map((e) => ({
+              convoId: e.address,
+            }))}
+          />
+        )}
+
+        {layout.showConvoMessages && (
+          <Conversation
+            convoId={currentConvoId}
+            messages={messages}
+            onSend={onSend}
+          />
+        )}
       </div>
-      <Conversation messages={messages} onSend={onSend} />
     </div>
   );
 }
@@ -220,4 +238,20 @@ export function useCombineMessages({
   });
 
   return sortedMessages;
+}
+
+export function useLayout(isConvoMessagesScreen: boolean): {
+  showConvoSelect: boolean;
+  showConvoMessages: boolean;
+} {
+  const theme = useTheme();
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up("lg"));
+
+  console.log("isConvoMessagesScreen", isConvoMessagesScreen);
+  console.log("isLargeScreen", isLargeScreen);
+
+  return {
+    showConvoSelect: !isConvoMessagesScreen || isLargeScreen,
+    showConvoMessages: isConvoMessagesScreen || isLargeScreen,
+  };
 }

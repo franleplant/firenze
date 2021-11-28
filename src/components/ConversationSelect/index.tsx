@@ -1,3 +1,5 @@
+import { styled } from "@mui/material/styles";
+
 import ConvoItem from "./ConvoItem";
 
 import NewConversation from "components/NewConversation";
@@ -12,9 +14,9 @@ export interface IProps {
   onConversationChange: (convoId: string) => void;
 }
 
-export default function Conversations(props: IProps) {
+export default function ConversationSelect(props: IProps) {
   return (
-    <div className="contacts__container">
+    <Container className="contacts__container">
       <div className="contact__item" style={{ background: "grey" }}>
         <NewConversation
           onNew={(newConvoId) => props.onConversationChange(newConvoId)}
@@ -31,6 +33,12 @@ export default function Conversations(props: IProps) {
           }}
         />
       ))}
-    </div>
+    </Container>
   );
 }
+
+const Container = styled("div")(({ theme }) => ({
+  [theme.breakpoints.down("lg")]: {
+    width: "100%",
+  },
+}));

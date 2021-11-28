@@ -8,6 +8,7 @@ import { IMessageUI } from "components/Messenger";
 import { useAddress } from "hooks/web3";
 
 export interface IProps {
+  convoId?: string;
   messages: Array<IMessageUI>;
   onSend: (newMessage: string) => void;
 }
@@ -72,9 +73,11 @@ export default function Conversation(props: IProps) {
           );
         })}
       </div>
-      <div className="messages_composer">
-        <Composer onSend={props.onSend} isSavingMessage={false} />
-      </div>
+      {props.convoId && (
+        <div className="messages_composer">
+          <Composer onSend={props.onSend} isSavingMessage={false} />
+        </div>
+      )}
     </div>
   );
 }
