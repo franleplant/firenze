@@ -89,15 +89,18 @@ export default function Message(props: IProps) {
 
           {link && (
             <Tooltip title={link}>
-              <Link href={link} target="__blank" rel="noopener" sx={{lineHeight: "1px"}}>
-                <CloudIcon titleAccess={`open ipfs link`} color="action"/>
+              <Link
+                href={link}
+                target="__blank"
+                rel="noopener"
+                sx={{ lineHeight: "1px" }}
+              >
+                <CloudIcon titleAccess={`open ipfs link`} color="action" />
               </Link>
             </Tooltip>
           )}
 
-          <Tooltip title={props.status}>
-          {statusIcon}
-          </Tooltip>
+          <Tooltip title={props.status}>{statusIcon}</Tooltip>
         </Stack>
 
         <Typography variant="body1" color="inherit" sx={{ marginTop: "10px" }}>
