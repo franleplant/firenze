@@ -12,7 +12,7 @@ export interface IInboxMessages {
 
 export interface IInboxArgs {
   archive: IArchivedConvos;
-  convoId: string;
+  convoId?: string;
 }
 
 export interface IInbox {
@@ -36,12 +36,14 @@ export function useInbox({ archive, convoId }: IInboxArgs): IInbox {
     });
   }
 
-  const currentConvoInbox = inbox[convoId] || [];
-  const currentConvoArchive = archive[convoId] || [];
+  const currentConvoInbox = inbox[convoId || ""] || [];
+  const currentConvoArchive = archive[convoId || ""] || [];
 
   // remove already archived messages from the inbox and also pop them out of the mailbox
   useDeepCompareEffect(() => {
-    //if(true) {return}
+    if (!convoId) {
+      return;
+    }
     // If the inbox is emtpy for that conversation then simply skip this hook
     // if the archive is empty do also the same
     if (

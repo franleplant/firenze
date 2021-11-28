@@ -1,5 +1,7 @@
 import type { NextPage } from "next";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/router";
+import invariant from "ts-invariant";
 
 // We need to make dynamic imports that only happen in the browser because
 // the app relies on some browser globals. Eventually we could fix them but
@@ -13,9 +15,20 @@ const App = dynamic(() => import("components/App"), {
 const Messenger = dynamic(() => import("components/Messenger"), { ssr: false });
 
 const Home: NextPage = () => {
+  const router = useRouter();
+  const { convoId } = router.query;
+  invariant(typeof convoId === "string" || typeof convoId === "undefined");
+
   return (
     <App>
-      <Messenger />
+      <Messenger
+        convoId={convoId}
+        onConversationChange={(convoID) => {
+          router.push(`/messenger?convoId=${convoID}`, undefined, {
+            shallow: true,
+          });
+        }}
+      />
     </App>
   );
 };

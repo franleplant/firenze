@@ -1,34 +1,18 @@
-import type { NextPage } from "next";
 import uniqBy from "lodash.uniqby";
-import { useRef, useState } from "react";
 import { v4 as uuid } from "uuid";
-import invariant from "ts-invariant";
+import { useTheme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { Paper, Box } from "@mui/material";
 
-import ConvoItem from "./ConvoItem";
-
+import ConversationSelect from "components/ConversationSelect";
+import Conversation from "components/Conversation";
 import { useSelfID } from "components/SelfID";
-import MessageFromPath from "components/MessageFromPath";
 import { IMessage, MsgURL, toMsgURL, useSaveMessage } from "dal/message";
 import { IArchivedConvos, useArchive, useSaveArchive } from "dal/archive";
 import { useMailbox, useSaveToMailbox } from "dal/mailbox";
-import Composer from "components/Composer";
-import NewConversation from "components/NewConversation";
-import { useInbox } from "components/Inbox";
-import Message from "components/Message";
+import { IInbox, useInbox } from "components/Inbox";
 import { useAddress, useWeb3Session } from "hooks/web3";
-import { useSendQueue } from "components/SendQueue";
-
-//
-// TODO
-// - UI
-// - the consuming messages from Q needs to be more dynamic,
-//   - first get the message from the Q and display it
-//   - give the user the chance to chose not to store it in ceramic
-//   - build UI to display this change in status (msg in memory, msg in ceramic, msg rejected)
-// - ENS domains
-//
-//
-//
+import { ISendQueue, useSendQueue } from "components/SendQueue";
 
 export interface IConversation {
   // pubkey
@@ -60,26 +44,25 @@ const HARDCODED_THREADS: Array<IConversation> = [
   },
 ];
 
-export interface IProps {}
+export interface IProps {
+  convoId?: string;
+  onConversationChange: (convoId: string) => void;
+}
 
+// TODO explain why all state handling of both converstaion selector and conversation
+// are in this component instead of abstracted there
 export default function Messenger(props: IProps) {
+  // infer if we have a converstation selected and therefore
+  // we are showing the conversation messages or we are in the conversation select
+  const isConvoMessagesScreen = !!props.convoId;
+  const layout = useLayout(isConvoMessagesScreen);
+
   const { selfID } = useSelfID();
   const address = useAddress();
 
-  const [currentConvoId, setCurrentConvoId] = useState(
-    "0x7dCE8a09aE403863dbAf9815DE20E4A7Bb18Ae9D".toLowerCase()
-  );
+  const currentConvoId = props.convoId;
 
   const sendQueue = useSendQueue(currentConvoId);
-
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
-  function scrollToLast() {
-    // Scroll to the bottom to reveal last message
-    const element = messagesContainerRef.current;
-    if (element) {
-      element.scrollTop = element.scrollHeight;
-    }
-  }
 
   // archive
   const { data: archive = {}, isLoading } = useArchive();
@@ -89,8 +72,7 @@ export default function Messenger(props: IProps) {
   const { mutateAsync: SaveToMailbox } = useSaveToMailbox();
 
   // ipfs
-  const { mutateAsync: saveMessage, isLoading: isSavingMessage } =
-    useSaveMessage();
+  const { mutateAsync: saveMessage } = useSaveMessage();
 
   // inbox
   const inbox = useInbox({ archive, convoId: currentConvoId });
@@ -166,10 +148,6 @@ export default function Messenger(props: IProps) {
     sendQueue.pop(msgURL);
   }
 
-  if (!selfID || !address || (isLoading && Object.keys(archive).length === 0)) {
-    return <div>loading...</div>;
-  }
-
   const toThread = (pubKey: string) => ({
     address: pubKey.toLowerCase(),
   });
@@ -180,17 +158,79 @@ export default function Messenger(props: IProps) {
     ...Object.keys(inbox.messages).map(toThread),
   ];
 
+  const messages = useCombineMessages({
+    convoId: currentConvoId,
+    archive,
+    inbox,
+    sendQueue,
+  });
+
+  // TODO improve
+  if (isLoading && Object.keys(archive).length === 0) {
+    return <div>loading...</div>;
+  }
+
+  console.log("asd", layout);
+
+  return (
+    <Box sx={{ height: "100%", overflow: "hidden" }}>
+      <Paper
+        sx={{ height: "100%", display: "flex", flexDirection: "row" }}
+        elevation={1}
+        square
+      >
+        {layout.showConvoSelect && (
+          <ConversationSelect
+            convoId={currentConvoId}
+            onConversationChange={props.onConversationChange}
+            conversations={uniqBy(threads, (e) => e.address).map((e) => ({
+              convoId: e.address,
+            }))}
+          />
+        )}
+
+        {layout.showConvoMessages && (
+          <Conversation
+            convoId={currentConvoId}
+            messages={messages}
+            onSend={onSend}
+          />
+        )}
+      </Paper>
+    </Box>
+  );
+}
+
+// TODO memoize
+export function useCombineMessages({
+  convoId,
+  archive,
+  inbox,
+  sendQueue,
+}: {
+  convoId: string | undefined;
+  archive: IArchivedConvos;
+  inbox: IInbox;
+  sendQueue: ISendQueue;
+}): Array<IMessageUI> {
+  if (!convoId) {
+    return [];
+  }
+
+  const archivedMsgs = archive[convoId]?.messages || [];
+  const inboxMsgs = inbox.messages[convoId] || [];
+
   const messages: Array<IMessageUI> = [
-    ...(archive[currentConvoId]?.messages || []).map((archivedMsg) => ({
+    ...archivedMsgs.map((archivedMsg) => ({
       msgURL: archivedMsg.url,
       timestamp: archivedMsg.timestamp,
-      convoId: currentConvoId,
+      convoId,
       isArchived: true,
     })),
-    ...(inbox.messages[currentConvoId] || []).map((envelope) => ({
+    ...inboxMsgs.map((envelope) => ({
       msgURL: envelope.msg.msgURL,
       timestamp: envelope.msg.timestamp,
-      convoId: currentConvoId,
+      convoId,
       isArchived: false,
     })),
     ...sendQueue.get(),
@@ -202,84 +242,21 @@ export default function Messenger(props: IProps) {
     return dateA < dateB ? -1 : 1;
   });
 
-  //console.log("Inbox messages", inbox.messages);
-  //console.log("UI messages", sortedMessages);
-  //
+  return sortedMessages;
+}
 
-  return (
-    <div className="page-container">
-      <div className="container">
-        <div className="contacts__container">
-          <div className="contact__item" style={{ background: "grey" }}>
-            <NewConversation
-              onNew={(newThreadId) => setCurrentConvoId(newThreadId)}
-            />
-          </div>
+export function useLayout(isConvoMessagesScreen: boolean): {
+  showConvoSelect: boolean;
+  showConvoMessages: boolean;
+} {
+  const theme = useTheme();
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up("lg"));
 
-          {uniqBy(threads, (e) => e.address).map((contact) => (
-            <ConvoItem
-              key={contact.address}
-              address={contact.address}
-              isSelected={contact.address === currentConvoId}
-              onClick={() => {
-                setCurrentConvoId(contact.address);
-              }}
-            />
-          ))}
-        </div>
-        <div className="messages__container">
-          <div
-            style={{
-              //marginTop: "20px",
-              padding: "10px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "10px",
-              //maxWidth: "900px",
-              background: "#FAFAFA",
-              overflowY: "scroll",
-              flex: "1",
-            }}
-            ref={messagesContainerRef}
-          >
-            {sortedMessages.map((msg, index) => {
-              // is still sending
-              if (!msg.msgURL) {
-                invariant(
-                  msg.preview,
-                  "a message without a url should have a preview"
-                );
-                return (
-                  <Message
-                    key={index}
-                    status={"sending"}
-                    timestamp={msg.timestamp}
-                    msg={msg.preview}
-                    // TODO review this prop, it is not understanable
-                    address={address}
-                    onMount={() => scrollToLast()}
-                  />
-                );
-              }
+  console.log("isConvoMessagesScreen", isConvoMessagesScreen);
+  console.log("isLargeScreen", isLargeScreen);
 
-              return (
-                <MessageFromPath
-                  key={index}
-                  msgURL={msg.msgURL}
-                  timestamp={msg.timestamp}
-                  status={msg.isArchived ? "archived" : "archiving"}
-                  // TODO review this prop, it is not understanable
-                  address={address}
-                  onSuccess={() => scrollToLast()}
-                />
-              );
-            })}
-          </div>
-          <div className="messages_composer">
-            <Composer onSend={onSend} isSavingMessage={isSavingMessage} />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return {
+    showConvoSelect: !isConvoMessagesScreen || isLargeScreen,
+    showConvoMessages: isConvoMessagesScreen || isLargeScreen,
+  };
 }

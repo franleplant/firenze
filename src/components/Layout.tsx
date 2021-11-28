@@ -8,13 +8,15 @@ export default function Layout({ children }: { children: JSX.Element }) {
     <div className="layout-container">
       <Header />
 
-      <Container maxWidth="xl" classes={{ root: "layout-container__main" }}>
-        {children}
+      <Container
+        maxWidth="xl"
+        classes={{ root: "layout-container__main" }}
+        disableGutters
+      >
+        <Paper sx={{ height: "100%" }} elevation={0}>
+          {children}
+        </Paper>
       </Container>
     </div>
   );
 }
-
-// TODO
-//<Paper sx={{height: "100%"}}>
-//</Paper>

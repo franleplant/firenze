@@ -1,5 +1,6 @@
 import CircularProgress from "@mui/material/CircularProgress";
 import Typography from "@mui/material/Typography";
+import { QueryClient, QueryClientProvider } from "react-query";
 
 import Layout from "./Layout";
 
@@ -9,6 +10,8 @@ import { FirebaseProvider } from "components/Firebase";
 import Providers from "components/Providers";
 import { useWeb3Session } from "hooks/web3";
 
+const queryClient = new QueryClient();
+
 export interface IProps {
   children: JSX.Element;
 }
@@ -17,15 +20,17 @@ export default function App(props: IProps) {
   return (
     <Providers>
       {/* TODO abstract */}
-      <FirebaseProvider>
-        <IPFSProvider>
-          <SelfIDProvider>
-            <Layout>
-              <Loader>{props.children}</Loader>
-            </Layout>
-          </SelfIDProvider>
-        </IPFSProvider>
-      </FirebaseProvider>
+      <QueryClientProvider client={queryClient}>
+        <FirebaseProvider>
+          <IPFSProvider>
+            <SelfIDProvider>
+              <Layout>
+                <Loader>{props.children}</Loader>
+              </Layout>
+            </SelfIDProvider>
+          </IPFSProvider>
+        </FirebaseProvider>
+      </QueryClientProvider>
     </Providers>
   );
 }

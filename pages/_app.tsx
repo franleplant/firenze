@@ -1,7 +1,6 @@
 import "../styles/globals.css";
 import type { AppProps } from "next/app";
 import Head from "next/head";
-import { QueryClient, QueryClientProvider } from "react-query";
 import {
   ThemeProvider as MUIThemeProvider,
   createTheme,
@@ -17,8 +16,6 @@ const clientSideEmotionCache = createEmotionCache();
 interface IProps extends AppProps {
   emotionCache?: EmotionCache;
 }
-
-const queryClient = new QueryClient();
 
 const muiTheme = createTheme({
   palette: {
@@ -36,11 +33,9 @@ export default function MyApp(props: IProps) {
       </Head>
       {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
       <CssBaseline />
-      <QueryClientProvider client={queryClient}>
-        <MUIThemeProvider theme={muiTheme}>
-          <Component {...pageProps} />
-        </MUIThemeProvider>
-      </QueryClientProvider>
+      <MUIThemeProvider theme={muiTheme}>
+        <Component {...pageProps} />
+      </MUIThemeProvider>
     </CacheProvider>
   );
 }
