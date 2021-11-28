@@ -1,11 +1,17 @@
 import invariant from "ts-invariant";
 import { useRef } from "react";
+import { useRouter } from "next/router";
+import { useMediaQuery } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import Button from "@mui/material/Button";
+import Stack from "@mui/material/Stack";
+import Paper from "@mui/material/Paper";
 
-import Composer from "components/Composer";
-import Message from "components/Message";
-import MessageFromPath from "components/MessageFromPath";
-import { IMessageUI } from "components/Messenger";
 import { useAddress } from "hooks/web3";
+import { IMessageUI } from "components/Messenger";
+import MessageFromPath from "components/MessageFromPath";
+import Message from "components/Message";
+import Composer from "components/Composer";
 
 export interface IProps {
   convoId?: string;
@@ -14,6 +20,7 @@ export interface IProps {
 }
 
 export default function Conversation(props: IProps) {
+  const router = useRouter();
   const ownAddress = useAddress();
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   function scrollToLast() {
@@ -24,60 +31,85 @@ export default function Conversation(props: IProps) {
     }
   }
 
+  // TODO abstract
+  const theme = useTheme();
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up("lg"));
+
   return (
-    <div className="messages__container">
-      <div
-        style={{
-          //marginTop: "20px",
-          padding: "10px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "10px",
-          //maxWidth: "900px",
-          background: "#FAFAFA",
-          overflowY: "scroll",
-          flex: "1",
-        }}
-        ref={messagesContainerRef}
+    <Stack sx={{ flex: 1 }}>
+      {!isLargeScreen && (
+        <Paper elevation={2}>
+          <Button
+            variant="text"
+            onClick={() =>
+              router.push("/messenger", undefined, { shallow: true })
+            }
+          >
+            Back
+          </Button>
+        </Paper>
+      )}
+      <Paper
+        sx={{ flex: 1, overflowY: "scroll", width: "100%" }}
+        elevation={10}
+        square
       >
-        {props.messages.map((msg, index) => {
-          // is still sending
-          if (!msg.msgURL) {
-            invariant(
-              msg.preview,
-              "a message without a url should have a preview"
-            );
+        <Stack
+          spacing={1}
+          direction={"column"}
+          sx={{ flex: 1, padding: "10px" }}
+          //style={{
+          ////marginTop: "20px",
+          //padding: "10px",
+          //display: "flex",
+          //flexDirection: "column",
+          //gap: "10px",
+          ////maxWidth: "900px",
+          //background: "#FAFAFA",
+          //overflowY: "scroll",
+          //flex: "1",
+          //}}
+          ref={messagesContainerRef}
+        >
+          {props.messages.map((msg, index) => {
+            // is still sending
+            if (!msg.msgURL) {
+              invariant(
+                msg.preview,
+                "a message without a url should have a preview"
+              );
+              return (
+                <Message
+                  key={index}
+                  status={"sending"}
+                  timestamp={msg.timestamp}
+                  msg={msg.preview}
+                  // TODO review this prop, it is not understanable
+                  address={ownAddress}
+                  onMount={() => scrollToLast()}
+                />
+              );
+            }
+
             return (
-              <Message
+              <MessageFromPath
                 key={index}
-                status={"sending"}
+                msgURL={msg.msgURL}
                 timestamp={msg.timestamp}
-                msg={msg.preview}
+                status={msg.isArchived ? "archived" : "archiving"}
                 // TODO review this prop, it is not understanable
                 address={ownAddress}
-                onMount={() => scrollToLast()}
+                onSuccess={() => scrollToLast()}
               />
             );
-          }
-
-          return (
-            <MessageFromPath
-              key={index}
-              msgURL={msg.msgURL}
-              timestamp={msg.timestamp}
-              status={msg.isArchived ? "archived" : "archiving"}
-              // TODO review this prop, it is not understanable
-              address={ownAddress}
-              onSuccess={() => scrollToLast()}
-            />
-          );
-        })}
-      </div>
+          })}
+        </Stack>
+      </Paper>
       {props.convoId && (
         <div className="messages_composer">
           <Composer onSend={props.onSend} isSavingMessage={false} />
         </div>
       )}
-    </div>
+    </Stack>
   );
 }

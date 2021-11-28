@@ -1,4 +1,8 @@
 import { useEffect, useRef } from "react";
+import Card from "@mui/material/Card";
+import CardActions from "@mui/material/CardActions";
+import CardContent from "@mui/material/CardContent";
+import Typography from "@mui/material/Typography";
 
 import { getIpfsPath, IMessage, MsgURL } from "dal/message";
 
@@ -29,33 +33,44 @@ export default function Message(props: IProps) {
     link = `${process.env.NEXT_PUBLIC_IPFS_GATEWAY}/ipfs/${path}`;
   }
 
+  let border: any = {
+    borderBottomLeftRadius: "5px",
+  };
+  if (isFromLocalUser) {
+    border = {
+      borderBottomRightRadius: "5px",
+    };
+  }
+
   return (
-    <div
-      style={{
-        padding: "10px",
-        border: "1px solid grey",
+    <Card
+      elevation={24}
+      sx={{
         maxWidth: "500px",
-        background: isFromLocalUser ? "#EEE" : "",
+        // TODO use theme
+        background: isFromLocalUser ? "#3b3232" : "#454545",
         alignSelf: isFromLocalUser ? "flex-end" : "flex-start",
-        ...props.style,
+        borderRadius: "20px",
+        ...border,
       }}
     >
-      <div>
-        <div>
-          <small>{props.timestamp}</small>
-          <small>{` ${props.status}`}</small>
-        </div>
+      <CardContent>
+        <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
+          {props.timestamp}
+          {` ${props.status}`}
+        </Typography>
         {link && (
-          <div>
+          <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
             <a href={link} target="__blank">
               ipfs: ...{link.slice(-10)}
             </a>
-          </div>
+          </Typography>
         )}
-        <div style={{ marginTop: "20px" }}>
+
+        <Typography variant="body2">
           {props.isLoading ? "Loading..." : props.msg?.content}
-        </div>
-      </div>
-    </div>
+        </Typography>
+      </CardContent>
+    </Card>
   );
 }

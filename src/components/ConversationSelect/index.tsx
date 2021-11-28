@@ -1,4 +1,8 @@
+import { Fragment } from "react";
 import { styled } from "@mui/material/styles";
+import List from "@mui/material/List";
+import Divider from "@mui/material/Divider";
+import Paper from "@mui/material/Paper";
 
 import ConvoItem from "./ConvoItem";
 
@@ -16,28 +20,36 @@ export interface IProps {
 
 export default function ConversationSelect(props: IProps) {
   return (
-    <Container className="contacts__container">
-      <div className="contact__item" style={{ background: "grey" }}>
+    <Container>
+      <Paper sx={{ padding: "10px" }} elevation={2}>
         <NewConversation
           onNew={(newConvoId) => props.onConversationChange(newConvoId)}
         />
-      </div>
+      </Paper>
 
-      {props.conversations.map((convo) => (
-        <ConvoItem
-          key={convo.convoId}
-          address={convo.convoId}
-          isSelected={convo.convoId === props.convoId}
-          onClick={() => {
-            props.onConversationChange(convo.convoId);
-          }}
-        />
-      ))}
+      <Paper elevation={1} sx={{ width: "100%", height: "100%" }}>
+        <List sx={{ width: "100%", height: "100%" }}>
+          {props.conversations.map((convo) => (
+            <Fragment key={convo.convoId}>
+              <ConvoItem
+                address={convo.convoId}
+                isSelected={convo.convoId === props.convoId}
+                onClick={() => {
+                  props.onConversationChange(convo.convoId);
+                }}
+              />
+              <Divider variant="inset" component="li" />
+            </Fragment>
+          ))}
+        </List>
+      </Paper>
     </Container>
   );
 }
 
 const Container = styled("div")(({ theme }) => ({
+  height: "100%",
+  maxWidth: "400px",
   [theme.breakpoints.down("lg")]: {
     width: "100%",
   },

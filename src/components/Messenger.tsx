@@ -2,6 +2,7 @@ import uniqBy from "lodash.uniqby";
 import { v4 as uuid } from "uuid";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
+import { Paper, Box } from "@mui/material";
 
 import ConversationSelect from "components/ConversationSelect";
 import Conversation from "components/Conversation";
@@ -172,8 +173,12 @@ export default function Messenger(props: IProps) {
   console.log("asd", layout);
 
   return (
-    <div className="page-container">
-      <div className="container">
+    <Box sx={{ height: "100%", overflow: "hidden" }}>
+      <Paper
+        sx={{ height: "100%", display: "flex", flexDirection: "row" }}
+        elevation={1}
+        square
+      >
         {layout.showConvoSelect && (
           <ConversationSelect
             convoId={currentConvoId}
@@ -191,8 +196,8 @@ export default function Messenger(props: IProps) {
             onSend={onSend}
           />
         )}
-      </div>
-    </div>
+      </Paper>
+    </Box>
   );
 }
 
