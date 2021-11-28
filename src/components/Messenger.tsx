@@ -170,8 +170,6 @@ export default function Messenger(props: IProps) {
     return <div>loading...</div>;
   }
 
-  console.log("asd", layout);
-
   return (
     <Box sx={{ height: "100%", overflow: "hidden" }}>
       <Paper
@@ -251,9 +249,6 @@ export function useLayout(isConvoMessagesScreen: boolean): {
 } {
   const theme = useTheme();
   const isLargeScreen = useMediaQuery(theme.breakpoints.up("lg"));
-
-  console.log("isConvoMessagesScreen", isConvoMessagesScreen);
-  console.log("isLargeScreen", isLargeScreen);
 
   return {
     showConvoSelect: !isConvoMessagesScreen || isLargeScreen,
