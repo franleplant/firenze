@@ -1,37 +1,26 @@
 import { useState } from "react";
-import Image from "next/image";
 import { Button } from "@mui/material";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
-import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import Menu from "@mui/material/Menu";
-import MenuIcon from "@mui/icons-material/Menu";
 import Container from "@mui/material/Container";
-import Avatar from "@mui/material/Avatar";
 import Tooltip from "@mui/material/Tooltip";
 import MenuItem from "@mui/material/MenuItem";
 
-import METAMASK_ICON_URL from "assets/images/metamask.png";
-import { injected } from "connectors";
+import LoginModal from "./LoginModal";
+
 import { useWeb3Session } from "hooks/web3";
 import useENSName from "hooks/useENSName";
 
-const pages = ["Products", "Pricing", "Blog"];
+//const pages = ["Products", "Pricing", "Blog"];
 const settings = ["Profile", "Account", "Dashboard", "Logout"];
 
 export default function Header() {
   const { activate, active, account } = useWeb3Session();
   const ENSName = useENSName(account);
-
-  async function onLogin() {
-    try {
-      // login with metamask
-
-      await activate(injected, undefined, true);
-    } catch (error) {}
-  }
+  const [open, setOpen] = useState(false);
 
   const isLoggedIn = active && !!account;
 
@@ -103,14 +92,17 @@ export default function Header() {
               ))}
             </Menu>
           </Box>
+          */}
           <Typography
             variant="h6"
             noWrap
             component="div"
-            sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}
+            sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}
           >
             Firenze
           </Typography>
+
+          {/*
           <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
             {pages.map((page) => (
               <Button
@@ -142,16 +134,17 @@ export default function Header() {
                 </Button>
               ) : (
                 <Button
-                  onClick={onLogin}
+                  onClick={() => setOpen(true)}
                   color="inherit"
-                  endIcon={
-                    <Image src={METAMASK_ICON_URL} width="25" height="25" />
-                  }
+                  //endIcon={
+                  //<Image src={METAMASK_ICON_URL} width="25" height="25" />
+                  //}
                 >
-                  Log In With Metamask
+                  Wallet Sign In
                 </Button>
               )}
             </Tooltip>
+            <LoginModal open={open} onClose={() => setOpen(false)} />
             <Menu
               sx={{ mt: "45px" }}
               id="menu-appbar"
