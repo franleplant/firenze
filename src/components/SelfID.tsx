@@ -16,7 +16,7 @@ export interface IProps {
 }
 
 export function SelfIDProvider(props: IProps) {
-  const { account: address } = useWeb3Session();
+  const { account: address, library } = useWeb3Session();
   const [selfID, setSelfID] = useState<SelfID | undefined>();
 
   useEffect(() => {
@@ -24,12 +24,10 @@ export function SelfIDProvider(props: IProps) {
       if (!address) {
         return;
       }
+      // TODO handle errors
       // The following configuration assumes your local node is connected to the Clay testnet
       const selfID = await SelfID.authenticate({
-        authProvider: new EthereumAuthProvider(
-          (window as any).ethereum,
-          address
-        ),
+        authProvider: new EthereumAuthProvider(library, address),
         // TODO env variable
         ceramic: "testnet-clay",
         //connectNetwork: 'testnet-clay',

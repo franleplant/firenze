@@ -12,16 +12,16 @@ import { FortmaticConnector } from "./Fortmatic";
 import { NetworkConnector } from "./NetworkConnector";
 
 // TODO
-const INFURA_KEY = process.env.REACT_APP_INFURA_KEY;
+const INFURA_KEY = process.env.NEXT_PUBLIC_INFURA_KEY;
 const FORMATIC_KEY = process.env.REACT_APP_FORTMATIC_KEY;
 const PORTIS_ID = process.env.REACT_APP_PORTIS_ID;
 
 // TODO
-//if (typeof INFURA_KEY === "undefined") {
-//throw new Error(
-//`REACT_APP_INFURA_KEY must be a defined environment variable`
-//);
-//}
+if (typeof INFURA_KEY === "undefined") {
+  throw new Error(
+    `NEXT_PUBLIC_INFURA_KEY must be a defined environment variable`
+  );
+}
 
 const NETWORK_URLS: { [key in SupportedChainId]: string } = {
   [SupportedChainId.MAINNET]: `https://mainnet.infura.io/v3/${INFURA_KEY}`,

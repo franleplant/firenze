@@ -130,16 +130,10 @@ export default function Header() {
                   sx={{ p: 0 }}
                   color="inherit"
                 >
-                  {ENSName || account.toLowerCase()}
+                  {ENSName || `...${account.toLowerCase().slice(-15)}`}
                 </Button>
               ) : (
-                <Button
-                  onClick={() => setOpen(true)}
-                  color="inherit"
-                  //endIcon={
-                  //<Image src={METAMASK_ICON_URL} width="25" height="25" />
-                  //}
-                >
+                <Button onClick={() => setOpen(true)} color="inherit">
                   Wallet Sign In
                 </Button>
               )}
