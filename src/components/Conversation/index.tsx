@@ -59,12 +59,12 @@ export default function Conversation(props: IProps) {
         }}
         elevation={10}
         square
+        ref={messagesContainerRef}
       >
         <Stack
           spacing={1}
           direction={"column"}
           sx={{ flex: 1, padding: "10px" }}
-          ref={messagesContainerRef}
         >
           {props.messages.map((msg, index) => {
             // is still sending
