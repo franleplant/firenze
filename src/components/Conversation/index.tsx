@@ -50,7 +50,10 @@ export default function Conversation(props: IProps) {
         </Paper>
       )}
       <Paper
-        sx={{ flex: 1, overflowY: "scroll", width: "100%" }}
+        sx={{ flex: 1, overflowY: "scroll", width: "100%",
+            // TODO this does not work
+        scrollbarColor: "hsla(0,0%,100%,.16) transparent" 
+        }}
         elevation={10}
         square
       >
@@ -58,17 +61,6 @@ export default function Conversation(props: IProps) {
           spacing={1}
           direction={"column"}
           sx={{ flex: 1, padding: "10px" }}
-          //style={{
-          ////marginTop: "20px",
-          //padding: "10px",
-          //display: "flex",
-          //flexDirection: "column",
-          //gap: "10px",
-          ////maxWidth: "900px",
-          //background: "#FAFAFA",
-          //overflowY: "scroll",
-          //flex: "1",
-          //}}
           ref={messagesContainerRef}
         >
           {props.messages.map((msg, index) => {
