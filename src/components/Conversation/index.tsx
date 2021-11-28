@@ -50,9 +50,12 @@ export default function Conversation(props: IProps) {
         </Paper>
       )}
       <Paper
-        sx={{ flex: 1, overflowY: "scroll", width: "100%",
-            // TODO this does not work
-        scrollbarColor: "hsla(0,0%,100%,.16) transparent" 
+        sx={{
+          flex: 1,
+          overflowY: "scroll",
+          width: "100%",
+          // TODO this does not work
+          scrollbarColor: "hsla(0,0%,100%,.16) transparent",
         }}
         elevation={10}
         square
