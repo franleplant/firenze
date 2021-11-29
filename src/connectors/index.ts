@@ -52,6 +52,7 @@ export const injected = new InjectedConnector({
 export const walletconnect = new WalletConnectConnector({
   supportedChainIds: ALL_SUPPORTED_CHAIN_IDS,
   rpc: NETWORK_URLS,
+  infuraId: INFURA_KEY,
   qrcode: true,
 });
 

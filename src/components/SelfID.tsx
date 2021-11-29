@@ -24,10 +24,44 @@ export function SelfIDProvider(props: IProps) {
       if (!address) {
         return;
       }
+
+      const patchedProvider = {
+        ...library,
+        send: async (
+          options: {
+            id: number;
+            jsonrpc: "2.0" | string;
+            method: string;
+            params: Array<any>;
+          },
+          cb: (error: any, result?: any) => void
+        ) => {
+          console.log(options);
+          try {
+            const res = await library?.send(options.method, options.params);
+            console.log(res);
+            cb(undefined, res);
+
+            return res;
+          } catch (err) {
+            console.error("ERROR", err)
+            cb(err);
+          }
+        },
+      };
+      const provider = library?.provider
+      //if (!provider?.isMetaMask) {
+      //provider = (provider as any).signer
+      //}
+
+      //console.log("address", address);
+      //console.log("library", library);
+      //console.log("provider", provider);
+
       // TODO handle errors
       // The following configuration assumes your local node is connected to the Clay testnet
       const selfID = await SelfID.authenticate({
-        authProvider: new EthereumAuthProvider(library, address),
+        authProvider: new EthereumAuthProvider(provider?.isMetaMask ? provider : patchedProvider, address),
         // TODO env variable
         ceramic: "testnet-clay",
         //connectNetwork: 'testnet-clay',
