@@ -44,12 +44,12 @@ export function SelfIDProvider(props: IProps) {
 
             return res;
           } catch (err) {
-            console.error("ERROR", err)
+            console.error("ERROR", err);
             cb(err);
           }
         },
       };
-      const provider = library?.provider
+      const provider = library?.provider;
       //if (!provider?.isMetaMask) {
       //provider = (provider as any).signer
       //}
@@ -61,7 +61,10 @@ export function SelfIDProvider(props: IProps) {
       // TODO handle errors
       // The following configuration assumes your local node is connected to the Clay testnet
       const selfID = await SelfID.authenticate({
-        authProvider: new EthereumAuthProvider(provider?.isMetaMask ? provider : patchedProvider, address),
+        authProvider: new EthereumAuthProvider(
+          provider?.isMetaMask ? provider : patchedProvider,
+          address
+        ),
         // TODO env variable
         ceramic: "testnet-clay",
         //connectNetwork: 'testnet-clay',
