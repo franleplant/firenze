@@ -21,15 +21,15 @@ export default function App(props: IProps) {
     <Providers>
       {/* TODO abstract */}
       <QueryClientProvider client={queryClient}>
-        <FirebaseProvider>
-          <IPFSProvider>
-            <SelfIDProvider>
+        <IPFSProvider>
+          <SelfIDProvider>
+            <FirebaseProvider>
               <Layout>
                 <Loader>{props.children}</Loader>
               </Layout>
-            </SelfIDProvider>
-          </IPFSProvider>
-        </FirebaseProvider>
+            </FirebaseProvider>
+          </SelfIDProvider>
+        </IPFSProvider>
       </QueryClientProvider>
     </Providers>
   );
