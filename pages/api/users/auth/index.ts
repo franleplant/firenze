@@ -8,7 +8,6 @@ import { NextApiRequest, NextApiResponse } from "next";
 
 var firebaseApp : FirebaseAdminApp ;
 const getFirebaseAdminApp = () => { 
-  console.log(firebaseApp);
   firebaseApp = firebaseApp ?? admin.initializeApp({
     credential: admin.credential.cert({
       projectId: process.env.FIREBASE_PROJECT_ID,
@@ -20,7 +19,6 @@ const getFirebaseAdminApp = () => {
     projectId: "firenze-q.appspot.com",
     databaseURL: "https://firenze-q-default-rtdb.firebaseio.com"
   }) ;
-  console.log(firebaseApp);
 
   return firebaseApp;
 }

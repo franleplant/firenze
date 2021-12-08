@@ -56,7 +56,7 @@ export function FirebaseProvider(props: IProps) {
       };
       
       const signedMessage = await sign(library, account, payload);
-      // todo: pretty ugly trycatch, make this more reactive?      
+      // todo: pretty ugly try/catch, make this more reactive?      
       try {
         const res = await fetch(`/api/users/auth`, {
           method: "POST",
