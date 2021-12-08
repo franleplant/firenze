@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "react-query";
 import { initializeApp, FirebaseApp } from "firebase/app";
 import { getDatabase, Database } from "firebase/database";
 
-import { getAuth, signInWithCustomToken } from "firebase/auth";
+import { getAuth, signInWithCustomToken, updateCurrentUser } from "firebase/auth";
 import { useWeb3Session } from "hooks/web3";
 
 import { ISignedPayload, sign } from "modules/signedPayload";
@@ -25,8 +25,8 @@ const firebaseConfig = {
   appId: "1:698512516258:web:fed85217ffd972f231e3fb",
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+let app = initializeApp(firebaseConfig);
+let db = getDatabase(app);
 export const Context = createContext<IContext>({ app, db });
 
 export interface IProps {
@@ -68,10 +68,14 @@ export function FirebaseProvider(props: IProps) {
         
         const body = await res.json();
         
-        const firebaseApp = initializeApp(firebaseConfig);
-        const auth = getAuth(firebaseApp);
+        const auth = getAuth(app);
         const userCredential = await signInWithCustomToken(auth, body.token);
         const user = userCredential.user;
+        //console.log(user);
+        //console.log(userCredential);
+        await updateCurrentUser(auth,user);
+        db = getDatabase(app);
+        
         setFirebase(app);
       } catch (error) {
             console.error(error);

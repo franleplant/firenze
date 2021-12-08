@@ -8,7 +8,9 @@
  * have a policiy about long lived messages that haven't
  * been read in x amount of time.
  */
+import { getAuth } from "@firebase/auth";
 import { useFirebase } from "components/Firebase";
+import { app } from "firebase-admin";
 import { ref, set, onValue, push, remove } from "firebase/database";
 import { useEffect, useRef } from "react";
 import { useMutation, UseMutationResult } from "react-query";
@@ -38,7 +40,7 @@ export function useSaveToMailbox(): UseMutationResult<
   }
 > {
   const { db } = useFirebase();
-
+  
   return useMutation(async ({ address, convoId, timestamp, msgURL }) => {
     const mailboxRef = ref(db, `mailbox/${address}`);
     const key = push(mailboxRef);

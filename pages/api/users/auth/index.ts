@@ -38,7 +38,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           res.status(500).json({ Error: error });
         }
       } else {
-        res.status(400);
+          res.status(400).json({ Error: "Invalid signed payload" });
         res.statusMessage = "Signed payload was found to be invalid."
       }
     
