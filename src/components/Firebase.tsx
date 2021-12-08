@@ -33,7 +33,7 @@ export interface IProps {
   children: React.ReactNode | undefined;
 }
 
-export const AuthMessage = "Authentication message";
+export const AUTH_MESSAGE = "Authentication message";
 
 export function FirebaseProvider(props: IProps) {
   const { account: address } = useWeb3Session();
@@ -48,39 +48,36 @@ export function FirebaseProvider(props: IProps) {
         return;
       }
 
-      debugger;
       invariant(!!active && !!account && !!chainId, "user must be logged in");
       invariant(!!library, "a provider must be available");
-
+      
       const payload = {
-        message: AuthMessage,
+        message: AUTH_MESSAGE,
       };
-
+      
       const signedMessage = await sign(library, account, payload);
-
-      const res = await fetch(`/api/users/auth`, {
-        method: "POST",
-        body: JSON.stringify({ signedPayload: signedMessage}),
-        headers: {
-          "content-type": "application/json",
-        },
-      });
-
-      const body = await res.json();
-      console.log(body);
-      const auth = getAuth();
-      signInWithCustomToken(auth, body.token)
-        .then((userCredential) => {
-          const user = userCredential.user;
-        })
-        .catch((error) => {
-          const errorCode = error.code;
-          const errorMessage = error.message;
-          // ...
+      // todo: pretty ugly trycatch, make this more reactive?      
+      try {
+        const res = await fetch(`/api/users/auth`, {
+          method: "POST",
+          body: JSON.stringify({ signedPayload: signedMessage}),
+          headers: {
+            "content-type": "application/json",
+          },
         });
+        
+        const body = await res.json();
+        
+        const firebaseApp = initializeApp(firebaseConfig);
+        const auth = getAuth(firebaseApp);
+        const userCredential = await signInWithCustomToken(auth, body.token);
+        const user = userCredential.user;
+        setFirebase(app);
+      } catch (error) {
+            console.error(error);
+        }
+      }
 
-      setFirebase(app);
-    }
     effect();
   }, [address]);
 
