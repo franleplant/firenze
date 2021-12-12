@@ -12,7 +12,7 @@ export default function Landing({
 }: {
   children: JSX.Element | null;
 }) {
-  const { selfID } = useSelfID();
+  const { selfID, error: selfIDError } = useSelfID();
   const { ipfs } = useIpfs();
   const { account } = useWeb3Session();
 
@@ -25,7 +25,7 @@ export default function Landing({
     }
 
     let selfIDStatus = null;
-    if (!selfID) {
+    if (account && !selfID) {
       selfIDStatus = (
         <>
           <Typography
@@ -48,6 +48,14 @@ export default function Landing({
           >
             If this is your first time you might need to create a new profile,
             but do not worry, the process is super easy.
+          </Typography>
+          <Typography
+            variant="body1"
+            color="error"
+            textAlign="center"
+            gutterBottom
+          >
+            {selfIDError}
           </Typography>
         </>
       );
