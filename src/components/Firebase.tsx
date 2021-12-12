@@ -1,16 +1,15 @@
 import { useEffect, useState, createContext, useContext } from "react";
 import { initializeApp, FirebaseApp } from "firebase/app";
 import { getDatabase, Database } from "firebase/database";
-
 import {
   getAuth,
   signInWithCustomToken,
   updateCurrentUser,
 } from "firebase/auth";
-import { useWeb3Session } from "hooks/web3";
-
-import { ISignedPayload, sign } from "modules/signedPayload";
 import invariant from "ts-invariant";
+
+import { useWeb3Session } from "hooks/web3";
+import { ISignedPayload, sign } from "modules/signedPayload";
 
 export interface IContext {
   db: Database;
@@ -79,7 +78,7 @@ export function FirebaseProvider(props: IProps) {
     }
 
     effect();
-  }, [address]);
+  }, [address, active, chainId, library]);
 
   return (
     <Context.Provider value={{ app: firebase, db }}>

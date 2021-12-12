@@ -1,13 +1,12 @@
 import { getAuth } from "firebase-admin/auth";
 import * as admin from "firebase-admin";
-import FirebaseAdminApp = admin.app.App;
-
-import { ISignedPayload, isValid } from "modules/signedPayload";
+import { app } from "firebase-admin";
 import { NextApiRequest, NextApiResponse } from "next";
 
-let firebaseApp: FirebaseAdminApp;
+import { ISignedPayload, isValid } from "modules/signedPayload";
 
-export function getFirebaseAdminApp(): FirebaseAdminApp {
+let firebaseApp: app.App;
+export function getFirebaseAdminApp(): app.App {
   if (!firebaseApp) {
     firebaseApp = admin.initializeApp({
       credential: admin.credential.cert({
