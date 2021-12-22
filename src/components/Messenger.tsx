@@ -29,20 +29,7 @@ export interface IMessageUI {
   preview?: IMessage;
 }
 
-const HARDCODED_THREADS: Array<IConversation> = [
-  {
-    address: "0x6f98518890604Aa8aC740E66806bCa93613E3CDe".toLowerCase(),
-    name: "lucas",
-  },
-  {
-    address: "0x7dCE8a09aE403863dbAf9815DE20E4A7Bb18Ae9D".toLowerCase(),
-    name: "fran",
-  },
-  {
-    address: "0x9863d00B0b896A0115D00e919227A26F8f3895E1".toLowerCase(),
-    name: "ignacio",
-  },
-];
+const HARDCODED_THREADS: Array<IConversation> = [ ];
 
 export interface IProps {
   convoId?: string;
