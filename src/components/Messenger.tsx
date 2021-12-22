@@ -29,7 +29,7 @@ export interface IMessageUI {
   preview?: IMessage;
 }
 
-const HARDCODED_THREADS: Array<IConversation> = [ ];
+const HARDCODED_THREADS: Array<IConversation> = [];
 
 export interface IProps {
   convoId?: string;
